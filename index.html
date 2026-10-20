@@ -1,0 +1,2361 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>기적의 메모 | 생각을 현실로 만드는 메모 & 실행 시스템</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <!-- Google Fonts: Inter & Noto Sans KR -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tuffy:ital,wght@0,400;0,700;1,400;1,700&family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Tuffy', 'Noto Sans KR', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+          },
+          colors: {
+            sand: {
+              50: '#FAF8F5',
+              100: '#F5EFEB',
+              200: '#EBE2D8',
+              300: '#DDD2C3',
+              400: '#C8B9A6',
+              500: '#B09F8A',
+            },
+            surface: {
+              bg: '#F5F5F7',
+              card: '#FFFFFF',
+              dark: '#121214',
+              border: 'rgba(0, 0, 0, 0.05)',
+            }
+          },
+          borderRadius: {
+            '2xl': '20px',
+            '3xl': '26px',
+            '4xl': '32px',
+          },
+          boxShadow: {
+            'soft': '0 2px 14px rgba(0, 0, 0, 0.03)',
+            'float': '0 10px 30px -8px rgba(0, 0, 0, 0.08)',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #F8F7F4;
+      font-family: 'Tuffy', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: #121214;
+      -webkit-font-smoothing: antialiased;
+      touch-action: manipulation;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    
+    textarea.v-auto-expand {
+      overflow-y: hidden !important;
+      resize: none !important;
+      box-sizing: border-box;
+    }
+    /* Dynamic color highlights for thought mapping (Preset 1 ~ 10) */
+    .hl-orange { border-bottom: 3px solid #F97316; }
+    .hl-pink { border-bottom: 3px solid #EC4899; }
+    .hl-blue { border-bottom: 3px solid #3B82F6; }
+    .hl-green { border-bottom: 3px solid #10B981; }
+    .hl-purple { border-bottom: 3px solid #8B5CF6; }
+    .hl-teal { border-bottom: 3px solid #14B8A6; }
+    .hl-yellow { border-bottom: 3px solid #EAB308; }
+    .hl-indigo { border-bottom: 3px solid #6366F1; }
+    .hl-rose { border-bottom: 3px solid #F43F5E; }
+    .hl-lime { border-bottom: 3px solid #84CC16; }
+  </style>
+</head>
+<body class="min-h-screen text-neutral-900 pb-28 sm:pb-20">
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed top-4 right-4 sm:top-6 sm:right-6 z-50 flex flex-col gap-2 pointer-events-none max-w-[90vw]"></div>
+
+  <!-- Reusable Action Modal -->
+  <div id="appModal" onclick="if(event.target === this) closeModal()" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-4 cursor-pointer">
+    <div id="appModalContent" onclick="event.stopPropagation()" class="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-7 shadow-float border border-neutral-100 max-h-[90vh] overflow-y-auto cursor-default">
+      <!-- Dynamic modal body -->
+    </div>
+  </div>
+
+  <!-- Main Responsive Container (Optimized for iPhone & Desktop) -->
+  <div class="max-w-4xl mx-auto px-3 sm:px-6 pt-5 sm:pt-8">
+    
+    <!-- Editorial Typography Top Navigation (Inspired by User Reference Image) -->
+    <header class="mb-4 pt-2 pb-1.5 border-b border-neutral-200/80 sticky top-0 bg-[#F8F7F4]/95 backdrop-blur-md z-30">
+      <nav id="dynamicTabBar" class="flex items-center justify-between sm:justify-start gap-4 sm:gap-8 overflow-x-auto no-scrollbar font-['Tuffy']">
+        <!-- Injected dynamically via JS -->
+      </nav>
+    </header>
+
+    <!-- MAIN PAGE VIEW CONTAINER -->
+    <main id="pageViewContainer" class="transition-all duration-200">
+      <!-- Active page content rendered here -->
+    </main>
+
+  </div>
+
+  <!-- Mobile Bottom Floating Navigation Bar -->
+  <div class="sm:hidden fixed bottom-3 left-3 right-3 z-40 bg-neutral-900/90 backdrop-blur-md text-white rounded-2xl p-1.5 shadow-float grid grid-cols-5 gap-1 border border-white/10 text-center font-['Tuffy'] tracking-wider">
+    <button onclick="switchTab('guide')" class="py-1.5 px-0.5 text-[11px] font-bold text-neutral-300 hover:text-white transition-colors truncate" data-bottom-tab="guide">
+      GUIDE
+    </button>
+    <button onclick="switchTab('braindump')" class="py-1.5 px-0.5 text-[11px] font-bold text-neutral-300 hover:text-white transition-colors truncate" data-bottom-tab="braindump">
+      DUMP
+    </button>
+    <button onclick="switchTab('verticalline')" class="py-1.5 px-0.5 text-[11px] font-bold text-neutral-300 hover:text-white transition-colors truncate" data-bottom-tab="verticalline">
+      3-LINE
+    </button>
+    <button onclick="switchTab('plantask')" class="py-1.5 px-0.5 text-[11px] font-bold text-neutral-300 hover:text-white transition-colors truncate" data-bottom-tab="plantask">
+      PLAN
+    </button>
+    <button onclick="switchTab('pagemanager')" class="py-1.5 px-0.5 text-[11px] font-bold text-neutral-300 hover:text-white transition-colors truncate" data-bottom-tab="pagemanager">
+      PAGES
+    </button>
+  </div>
+
+  <script>
+    // Initial App State & Persistence
+    const STORAGE_KEY = 'MIRACLE_MEMO_APP_DATA_v3';
+
+    // Preset Colors for Numbers 1 ~ 10
+    const PRESET_COLORS = {
+      1: { id: 'orange', name: '주황', hlClass: 'hl-orange text-orange-950', badgeClass: 'bg-orange-100 text-orange-900 border-orange-200', dot: 'bg-orange-500' },
+      2: { id: 'pink', name: '핑크', hlClass: 'hl-pink text-pink-950', badgeClass: 'bg-pink-100 text-pink-900 border-pink-200', dot: 'bg-pink-500' },
+      3: { id: 'blue', name: '파랑', hlClass: 'hl-blue text-blue-950', badgeClass: 'bg-blue-100 text-blue-900 border-blue-200', dot: 'bg-blue-500' },
+      4: { id: 'green', name: '초록', hlClass: 'hl-green text-emerald-950', badgeClass: 'bg-emerald-100 text-emerald-900 border-emerald-200', dot: 'bg-emerald-500' },
+      5: { id: 'purple', name: '보라', hlClass: 'hl-purple text-purple-950', badgeClass: 'bg-purple-100 text-purple-900 border-purple-200', dot: 'bg-purple-500' },
+      6: { id: 'teal', name: '청록', hlClass: 'hl-teal text-teal-950', badgeClass: 'bg-teal-100 text-teal-900 border-teal-200', dot: 'bg-teal-500' },
+      7: { id: 'yellow', name: '노랑', hlClass: 'hl-yellow text-amber-950', badgeClass: 'bg-yellow-100 text-yellow-900 border-yellow-200', dot: 'bg-yellow-400' },
+      8: { id: 'indigo', name: '남색', hlClass: 'hl-indigo text-indigo-950', badgeClass: 'bg-indigo-100 text-indigo-900 border-indigo-200', dot: 'bg-indigo-500' },
+      9: { id: 'rose', name: '로즈', hlClass: 'hl-rose text-rose-950', badgeClass: 'bg-rose-100 text-rose-900 border-rose-200', dot: 'bg-rose-500' },
+      10: { id: 'lime', name: '라임', hlClass: 'hl-lime text-lime-950', badgeClass: 'bg-lime-100 text-lime-900 border-lime-200', dot: 'bg-lime-500' }
+    };
+
+    function getPresetColor(num) {
+      const norm = (((num - 1) % 10) + 10) % 10 + 1;
+      return PRESET_COLORS[norm] || PRESET_COLORS[1];
+    }
+
+    // Default configuration
+    const DEFAULT_DATA = {
+      activeTab: 'guide',
+      activityDays: ['2026-10-02', '2026-10-05', '2026-10-07', '2026-10-09', '2026-10-12', '2026-10-14', '2026-10-15', '2026-10-16', '2026-10-18', '2026-10-19', '2026-10-20'],
+      pages: [
+        { id: 'guide', title: 'guide', desc: 'Lecture Summary & Core Principles' },
+        { id: 'braindump', title: 'brain dump', desc: 'Rapid Unfiltered Thoughts' },
+        { id: 'verticalline', title: '3-line note', desc: 'Facts, Thoughts, & Outcomes' },
+        { id: 'plantask', title: 'plan & task', desc: 'Base & Derived Action Modules' },
+        { id: 'pagemanager', title: 'pages', desc: 'Workspace & Custom Pages' }
+      ],
+      customPages: {},
+      // Structured Vertical Notes (세 줄 노트)
+      verticalNotes: [
+        {
+          id: 'vnote_friend',
+          title: '친구와 약속시간 갈등 분석 (강의 원문 예시)',
+          date: '2026-10-20',
+          category: '인간관계/감정분리',
+          rows: [
+            { fact: '친구가 약속시간에 늦었다.', thought: '약속시간을 얼마나 늦었는가?\n친구가 늦은 이유는 무엇인가?' },
+            { fact: '나는 약속 시간에 늦은 것보다 사과하지 않는 것에 화가 났다.', thought: '친구는 내가 화난 포인트를 알고 있는가?' },
+            { fact: '이번에 늦은 것이 처음이 아니고 반복된다.', thought: '늦은 것에 대해서 빨리 넘어가고 싶은 의도를 가지고 있는가?' },
+            { fact: '친구가 농담으로 나를 웃기려고 했다.', thought: '나는 친구와 다른 형태의 갈등을 새로 만들어 내는건 아니었을까?' },
+            { fact: '나는 웃지 않고 트집을 잡았다.', thought: '정말 그 농담이 재미가 없었나? 제대로 사과해 주길 바란것일까?' }
+          ],
+          conclusion: '친구의 지각 자체보다 "성의 없는 태도와 사과 부재"에 상처받았음. 하지만 나 역시 비꼬는 농담으로 대응하여 본질적인 대화를 막고 감정 싸움으로 번지게 만들었음.',
+          actionPlan: '다음번 만남에서 솔직하게 "지각할 때 가볍게 농담으로 넘어가면 무시받는 느낌이 들어 속상하다"고 담백한 완전한 문장으로 말하기.'
+        },
+        {
+          id: 'vnote_work',
+          title: '기획서 피드백에 대한 객관적 반추',
+          date: '2026-10-19',
+          category: '업무/피드백',
+          rows: [
+            { fact: '팀장님이 "3페이지 데이터 출처가 불분명하니 재확인하라"고 말했다.', thought: '팀장님이 내 기획서 전체를 부정적으로 평가하는 것일까?' },
+            { fact: '팀장님의 어조는 평소와 같았고 다른 페이지에 대해서는 수정 요청이 없었다.', thought: '내가 과민하게 반응하고 있지는 않은가? 사실은 단지 1개 수치의 보강일 뿐이다.' },
+            { fact: '', thought: '' },
+            { fact: '', thought: '' },
+            { fact: '', thought: '' }
+          ],
+          conclusion: '피드백은 기획서 완성도를 높이기 위한 객관적 조언일 뿐, 나 개인에 대한 질책이나 거절이 아님을 확인.',
+          actionPlan: ''
+        }
+      ],
+      // 윤정우 강사의 [생각 모으기] 시스템 데이터 (베이스 & 파생)
+      thoughtGathering: {
+        leftItems: [
+          { id: 'base_1', num: 1, text: '짜장면 먹기', color: 'orange', completed: false },
+          { id: 'base_2', num: 2, text: '커피 마시기', color: 'pink', completed: true },
+          { id: 'base_3', num: 3, text: '집청소 하기', color: 'blue', completed: false }
+        ],
+        rightItems: [
+          { id: 'derived_1', num: 1, text: '탕수육 먹기', color: 'orange', completed: false },
+          { id: 'derived_2', num: 1, text: '군만두 먹기', color: 'orange', completed: false },
+          { id: 'derived_3', num: 3, text: '빨래 개기', color: 'blue', completed: true },
+          { id: 'derived_4', num: 3, text: '쓰레기 버리기', color: 'blue', completed: false }
+        ]
+      },
+      // 생각 모으기 지난 보관함 (세션 저장)
+      thoughtGatheringArchives: [
+        {
+          id: 'tga_sample_1',
+          title: '강의 기본 예시 (중식 식사 및 집안일)',
+          date: '2026-10-20',
+          leftItems: [
+            { id: 'base_1', num: 1, text: '짜장면 먹기', color: 'orange', completed: false },
+            { id: 'base_2', num: 2, text: '커피 마시기', color: 'pink', completed: true },
+            { id: 'base_3', num: 3, text: '집청소 하기', color: 'blue', completed: false }
+          ],
+          rightItems: [
+            { id: 'derived_1', num: 1, text: '탕수육 먹기', color: 'orange', completed: false },
+            { id: 'derived_2', num: 1, text: '군만두 먹기', color: 'orange', completed: false },
+            { id: 'derived_3', num: 3, text: '빨래 개기', color: 'blue', completed: true },
+            { id: 'derived_4', num: 3, text: '쓰레기 버리기', color: 'blue', completed: false }
+          ]
+        }
+      ],
+      brainDumps: [
+        { id: 'dump_1', text: '기적의 메모 강의 듣고 내 업무 프로세스에 세 줄 노트 적용해보기', tag: '아이디어', date: '10-20', status: 'active' },
+        { id: 'dump_2', text: '회의할 때 자꾸 내 감정이 앞서서 피드백을 곡해하는 경향이 있음', tag: '고민', date: '10-20', status: 'active' },
+        { id: 'dump_3', text: '이번 주말까지 신규 프로젝트 1차 기획안 초안 2페이지 작성', tag: '할일', date: '10-20', status: 'active' },
+        { id: 'dump_4', text: '모닝 루틴에서 핸드폰 보지 않고 바로 브레인덤프 진행하기', tag: '메모', date: '10-19', status: 'done' }
+      ],
+      customLectureNotes: [
+        {
+          id: 'cnote_1',
+          chapter: 'Chapter 01. 손으로 생각하는 메모',
+          title: '데이터 vs 정보 & 생각의 시각화',
+          content: '데이터는 원석이고 정보는 다이아몬드다. 정리가 안 된 것은 다 데이터다. 데이터를 모아 나를 위한 정보로 바꾸지 않으면 다른 이의 생각을 내 것이라 착각하며 살게 된다. 머릿속으로 암산하지 말고 종이에 적어 눈으로 보라.',
+          date: '2026-10-20'
+        }
+      ]
+    };
+
+    let appState = null;
+    let timerInterval = null;
+    let timerSecondsLeft = 180;
+    let activeBaseNum = 1; // Currently selected parent base task for derived tasks
+
+    // Load State from LocalStorage
+    function loadState() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          appState = JSON.parse(saved);
+          if (!appState.pages) appState.pages = DEFAULT_DATA.pages;
+          if (!appState.activityDays) appState.activityDays = DEFAULT_DATA.activityDays;
+          if (!appState.verticalNotes) appState.verticalNotes = DEFAULT_DATA.verticalNotes;
+          if (!appState.thoughtGathering) appState.thoughtGathering = DEFAULT_DATA.thoughtGathering;
+          if (!appState.thoughtGatheringArchives) appState.thoughtGatheringArchives = DEFAULT_DATA.thoughtGatheringArchives;
+          if (!appState.brainDumps) appState.brainDumps = DEFAULT_DATA.brainDumps;
+          if (!appState.customLectureNotes) appState.customLectureNotes = DEFAULT_DATA.customLectureNotes;
+          if (!appState.customPages) appState.customPages = {};
+          
+          // Ensure page titles are clean in English
+          appState.pages.forEach(p => {
+            if (p.id === 'guide') p.title = 'guide';
+            if (p.id === 'braindump') p.title = 'brain dump';
+            if (p.id === 'verticalline') p.title = '3-line note';
+            if (p.id === 'plantask') p.title = 'plan & task';
+            if (p.id === 'pagemanager') p.title = 'pages';
+          });
+        } else {
+          appState = JSON.parse(JSON.stringify(DEFAULT_DATA));
+          saveState();
+        }
+      } catch (e) {
+        console.error('Error loading state:', e);
+        appState = JSON.parse(JSON.stringify(DEFAULT_DATA));
+      }
+      recordActivityToday();
+      if (appState.thoughtGathering?.leftItems?.length > 0) {
+        activeBaseNum = appState.thoughtGathering.leftItems[0].num;
+      }
+    }
+
+    function recordActivityToday() {
+      const todayStr = '2026-10-20';
+      if (!appState.activityDays) appState.activityDays = [];
+      if (!appState.activityDays.includes(todayStr)) {
+        appState.activityDays.push(todayStr);
+      }
+    }
+
+    function saveState() {
+      recordActivityToday();
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      } catch (e) {
+        console.error('Error saving state:', e);
+      }
+      updateTopWidgets();
+    }
+
+    // Toast Utility (Sandbox safe, no alert)
+    function showToast(message, type = 'normal') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `px-3.5 py-2.5 rounded-2xl shadow-float text-xs font-semibold flex items-center gap-2 transition-all duration-300 transform translate-y-2 opacity-0 pointer-events-auto ${
+        type === 'success' ? 'bg-neutral-900 text-white' : 'bg-white text-neutral-900 border border-neutral-200'
+      }`;
+      toast.innerHTML = `
+        <span>${type === 'success' ? '✓' : 'ℹ'}</span>
+        <span>${message}</span>
+      `;
+      container.appendChild(toast);
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      });
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 2500);
+    }
+
+    // Modal Utility
+    function openModal(htmlContent) {
+      const modal = document.getElementById('appModal');
+      const content = document.getElementById('appModalContent');
+      content.innerHTML = htmlContent;
+      modal.classList.remove('hidden');
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('appModal');
+      modal.classList.add('hidden');
+    }
+
+    // Update Top Widgets
+    function updateTopWidgets() {
+      // Top mini widgets removed for clean studio aesthetic
+    }
+
+    function renderTabs() {
+      const tabBar = document.getElementById('dynamicTabBar');
+      if (!tabBar) return;
+      tabBar.innerHTML = '';
+
+      appState.pages.forEach((page) => {
+        const isActive = appState.activeTab === page.id;
+        const btn = document.createElement('button');
+        btn.className = `text-left font-['Tuffy'] transition-colors duration-150 py-0.5 whitespace-nowrap ${
+          isActive 
+            ? 'text-neutral-950 font-black text-sm sm:text-base' 
+            : 'text-neutral-400 hover:text-neutral-700 font-bold text-sm sm:text-base'
+        }`;
+        btn.innerHTML = `<span>${page.title.toLowerCase()}</span>`;
+        btn.addEventListener('click', () => {
+          switchTab(page.id);
+        });
+        tabBar.appendChild(btn);
+      });
+
+      // Update mobile bottom tab highlighting
+      document.querySelectorAll('[data-bottom-tab]').forEach(btn => {
+        const tid = btn.getAttribute('data-bottom-tab');
+        if (tid === appState.activeTab) {
+          btn.className = 'py-1.5 px-0.5 text-[11px] font-black text-white bg-white/20 rounded-xl transition-colors truncate';
+        } else {
+          btn.className = 'py-1.5 px-0.5 text-[11px] font-medium text-neutral-400 hover:text-white transition-colors truncate';
+        }
+      });
+    }
+
+    window.switchTab = function(tabId) {
+      appState.activeTab = tabId;
+      saveState();
+      renderTabs();
+      renderActivePage();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    // Main Page View Switcher
+    function renderActivePage() {
+      const container = document.getElementById('pageViewContainer');
+      if (!container) return;
+
+      const currentTab = appState.activeTab;
+
+      if (currentTab === 'guide') {
+        renderGuidePage(container);
+      } else if (currentTab === 'braindump') {
+        renderBrainDumpPage(container);
+      } else if (currentTab === 'verticalline') {
+        renderVerticalLinePage(container);
+      } else if (currentTab === 'plantask') {
+        renderPlanTaskPage(container);
+      } else if (currentTab === 'pagemanager') {
+        renderPageManager(container);
+      } else {
+        renderCustomPage(container, currentTab);
+      }
+    }
+
+    // ==========================================
+    // PAGE 1: 강의 핵심 정리
+    // ==========================================
+    function renderGuidePage(container) {
+      container.innerHTML = `
+        <div class="space-y-5 sm:space-y-6">
+          
+          <!-- Banner -->
+          <div class="bg-neutral-900 text-white rounded-3xl p-5 sm:p-7 shadow-float relative overflow-hidden">
+            <div class="relative z-10 max-w-xl">
+              <span class="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-neutral-400">생각을 현실로 만드는 기적의 메모</span>
+              <h2 class="text-xl sm:text-2xl font-extrabold tracking-tight mt-1">데이터를 나를 위한 '정보'로 바꾸는 기술</h2>
+              <p class="text-neutral-300 text-xs sm:text-sm mt-2 leading-relaxed font-normal">
+                "정리되지 않은 생각은 믿지 마세요. 머릿속에서 암산하듯 굴리지 말고, 일단 손 가는 대로 종이에 꺼내어 눈으로 확인해야 이성적 판단이 가능합니다."
+              </p>
+              <div class="flex flex-wrap items-center gap-1.5 mt-3 sm:mt-4">
+                <span class="px-2.5 py-0.5 rounded-full bg-neutral-800 text-neutral-200 text-[11px] font-medium border border-neutral-700">#원석에서_다이아몬드로</span>
+                <span class="px-2.5 py-0.5 rounded-full bg-neutral-800 text-neutral-200 text-[11px] font-medium border border-neutral-700">#완전한_문장_메모</span>
+                <span class="px-2.5 py-0.5 rounded-full bg-neutral-800 text-neutral-200 text-[11px] font-medium border border-neutral-700">#베이스_파생_연결</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 1: 데이터 vs 정보의 차이 -->
+          <div class="bg-white p-5 sm:p-7 rounded-3xl border border-neutral-200/60 shadow-soft">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="px-2 py-0.5 rounded-md bg-sand-200 text-neutral-900 text-xs font-bold">개념 정의</span>
+              <h3 class="text-sm sm:text-base font-bold text-neutral-900">데이터(원석) vs 정보(다이아몬드)</h3>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs mb-3">
+              <div class="p-3.5 rounded-2xl bg-neutral-50 border border-neutral-100">
+                <div class="flex items-center gap-2 font-bold text-neutral-800 mb-1">
+                  <span class="w-2 h-2 rounded-full bg-neutral-400"></span>
+                  <span>데이터 (Data) : 원석</span>
+                </div>
+                <p class="text-neutral-500 leading-relaxed">
+                  정리되지 않은 채 흩뿌려진 원천 자료. <b>"정리 안 된 것들은 다 데이터다."</b> 남의 정보나 데이터를 맹목적으로 받아들이지 말고 나만의 시각에서 이해해야 합니다.
+                </p>
+              </div>
+
+              <div class="p-3.5 rounded-2xl bg-sand-50/70 border border-sand-200/60">
+                <div class="flex items-center gap-2 font-bold text-neutral-900 mb-1">
+                  <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                  <span>정보 (Information) : 다이아몬드</span>
+                </div>
+                <p class="text-neutral-600 leading-relaxed">
+                  내가 원하는 형태로 가공되고 정리된 것. <b>"데이터를 나를 위한 정보로 바꾸지 않으면, 결국 다른 이의 의견이나 생각을 내 것이라 착각하고 살게 된다."</b>
+                </p>
+              </div>
+            </div>
+
+            <div class="p-3 rounded-2xl bg-neutral-100/70 text-xs text-neutral-700 font-medium flex items-start gap-2">
+              <span class="text-sm">💡</span>
+              <span><b>생각정리란?</b> 데이터를 모아 '나를 위한 정보'로 만드는 과정입니다. 가공하기 전의 머릿속 생각은 절대 믿지 말고 그대로 쏟아내야 합니다.</span>
+            </div>
+          </div>
+
+          <!-- Section 2: 생각과 사실을 분리하는 3대 공식 -->
+          <div class="bg-white p-5 sm:p-7 rounded-3xl border border-neutral-200/60 shadow-soft">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="text-sm sm:text-base font-bold text-neutral-900">생각과 사실을 분리하는 3대 공식</h3>
+                <p class="text-[11px] text-neutral-400 mt-0.5">"생각을 봐야 정리가 가능한데, 생각은 사실이 아니다!"</p>
+              </div>
+              <span class="text-xs px-2.5 py-0.5 rounded-full bg-neutral-900 text-white font-bold">실전 원칙</span>
+            </div>
+
+            <div class="space-y-3 text-xs">
+              
+              <div class="p-3.5 rounded-2xl bg-neutral-50/80 border border-neutral-100 flex items-start gap-3">
+                <div class="w-6 h-6 rounded-xl bg-neutral-900 text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">1</div>
+                <div>
+                  <h4 class="font-bold text-neutral-900 text-xs sm:text-sm">단어가 아닌 '완전한 문장'으로 작성하라</h4>
+                  <p class="text-neutral-600 mt-1 leading-relaxed">
+                    주어와 서술어를 명확히 매칭하여 작성합니다. 단어 몇 개만 휘갈겨 적으면 시간이 흐른 뒤 맥락이 사라져 나중에 봐도 알 수 없습니다.
+                  </p>
+                </div>
+              </div>
+
+              <div class="p-3.5 rounded-2xl bg-neutral-50/80 border border-neutral-100 flex items-start gap-3">
+                <div class="w-6 h-6 rounded-xl bg-neutral-900 text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">2</div>
+                <div>
+                  <h4 class="font-bold text-neutral-900 text-xs sm:text-sm">한 문장에 '한 가지 내용만 짧게' 적어라 (요약 금지)</h4>
+                  <p class="text-neutral-600 mt-1 leading-relaxed">
+                    "~하고, ~해서" 같은 연결어로 굳이 길게 늘려 쓰지 마세요. 한 문장에는 단 하나의 팩트나 생각만 담백하게 끊어서 씁니다.
+                  </p>
+                </div>
+              </div>
+
+              <div class="p-3.5 rounded-2xl bg-neutral-50/80 border border-neutral-100 flex items-start gap-3">
+                <div class="w-6 h-6 rounded-xl bg-neutral-900 text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">3</div>
+                <div>
+                  <h4 class="font-bold text-neutral-900 text-xs sm:text-sm">메모는 '미래의 나'에게 생각을 전달하는 방법이다</h4>
+                  <p class="text-neutral-600 mt-1 leading-relaxed">
+                    당장은 대충 적어도 기억나지만, 나중에 보면 남의 글처럼 낯설어집니다. <b>"미래의 나는 다른 사람이다"</b>라고 생각하고, 남이 읽어도 오해 없이 이해할 수 있도록 적어야 합니다.
+                  </p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Section 3: 강의 핵심 요약집 -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            
+            <div class="bg-white p-5 rounded-3xl border border-neutral-200/60 shadow-soft flex flex-col justify-between">
+              <div>
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="text-base">📏</span>
+                  <h4 class="text-xs sm:text-sm font-bold text-neutral-900">세 줄 노트 작성법 (생각·감정 분리)</h4>
+                </div>
+                <p class="text-xs text-neutral-600 leading-relaxed">
+                  중간에 줄 하나를 긋고 <b>[왼쪽: 사실(Fact)]</b>과 <b>[오른쪽: 생각/질문(Thought)]</b>을 분리합니다. 단지 적는 것만으로 감정 소비 없이 현명한 판단이 가능해지고 <b>생각하는 힘</b>이 길러집니다.
+                </p>
+              </div>
+              <div class="mt-4 pt-3 border-t border-neutral-100 flex justify-between items-center text-xs">
+                <span class="text-neutral-400 font-medium">+ 결과/결론 칸 지원</span>
+                <button onclick="switchTab('verticalline')" class="font-bold text-neutral-900 hover:underline">세 줄 노트 쓰기 →</button>
+              </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-3xl border border-neutral-200/60 shadow-soft flex flex-col justify-between">
+              <div>
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="text-base">🎯</span>
+                  <h4 class="text-xs sm:text-sm font-bold text-neutral-900">계획과 할 일 (베이스 & 파생)</h4>
+                </div>
+                <p class="text-xs text-neutral-600 leading-relaxed">
+                  중심이 되는 <b>[왼쪽 베이스 할 일(1, 2, 3...)]</b>을 먼저 적고, 그에 딸려 나오는 <b>[오른쪽 파생 할 일]</b>을 클릭 한 번으로 연결합니다. 번호와 색상이 자동으로 묶여 논리적 실행 패키지가 완성됩니다.
+                </p>
+              </div>
+              <div class="mt-4 pt-3 border-t border-neutral-100 flex justify-between items-center text-xs">
+                <span class="text-neutral-400 font-medium">보관함 저장 및 재활용</span>
+                <button onclick="switchTab('plantask')" class="font-bold text-neutral-900 hover:underline">생각 모으기 →</button>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Section 4: 실시간 강의 필기장 -->
+          <div class="bg-white p-5 sm:p-7 rounded-3xl border border-neutral-200/60 shadow-soft">
+            <div class="flex items-center justify-between gap-2 mb-4">
+              <div>
+                <h3 class="text-sm sm:text-base font-bold text-neutral-900">나의 실시간 강의 필기장</h3>
+                <p class="text-[11px] text-neutral-400 mt-0.5">강의를 들으며 배운 추가 내용을 자유롭게 메모하고 저장하세요.</p>
+              </div>
+              <button id="addCustomNoteBtn" class="px-3.5 py-1.5 rounded-xl bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 transition-colors shrink-0">
+                + 새 필기 추가
+              </button>
+            </div>
+            <div id="lectureNoteContainer" class="space-y-2.5">
+              <!-- Injected via JS -->
+            </div>
+          </div>
+
+        </div>
+      `;
+
+      renderLectureNotes();
+      document.getElementById('addCustomNoteBtn').addEventListener('click', openAddNoteModal);
+    }
+
+    function renderLectureNotes() {
+      const container = document.getElementById('lectureNoteContainer');
+      if (!container) return;
+      const notes = appState.customLectureNotes || [];
+      if (notes.length === 0) {
+        container.innerHTML = `<div class="p-6 text-center text-xs text-neutral-400">등록된 강의 필기가 없습니다. 새 노트를 추가해보세요.</div>`;
+        return;
+      }
+      container.innerHTML = notes.map(n => `
+        <div class="p-3.5 rounded-2xl bg-neutral-50 border border-neutral-100">
+          <div class="flex items-center justify-between text-[11px] mb-1">
+            <span class="font-bold text-neutral-500 bg-white px-2 py-0.5 rounded-full border border-neutral-200/60">${escapeHtml(n.chapter)}</span>
+            <div class="flex items-center gap-2">
+              <span class="text-neutral-400">${escapeHtml(n.date)}</span>
+              <button onclick="deleteCustomLectureNote('${n.id}')" class="text-neutral-400 hover:text-red-500">삭제</button>
+            </div>
+          </div>
+          <h4 class="text-xs sm:text-sm font-bold text-neutral-900 mb-1">${escapeHtml(n.title)}</h4>
+          <p class="text-xs text-neutral-600 leading-relaxed whitespace-pre-line">${escapeHtml(n.content)}</p>
+        </div>
+      `).join('');
+    }
+
+    window.deleteCustomLectureNote = function(id) {
+      appState.customLectureNotes = appState.customLectureNotes.filter(n => n.id !== id);
+      saveState();
+      renderLectureNotes();
+      showToast('강의 노트가 삭제되었습니다.');
+    };
+
+    function openAddNoteModal() {
+      const html = `
+        <div class="space-y-3.5">
+          <div class="flex items-center justify-between pb-2 border-b border-neutral-100">
+            <h4 class="text-sm sm:text-base font-bold text-neutral-900">새 강의 필기 추가</h4>
+            <button onclick="closeModal()" class="text-neutral-400 hover:text-neutral-900 text-sm">✕</button>
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-neutral-600 mb-1">챕터 / 파트</label>
+            <input type="text" id="modalNoteChapter" value="Chapter 03. " class="w-full text-xs p-2.5 rounded-xl border border-neutral-200 focus:outline-none focus:border-neutral-900">
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-neutral-600 mb-1">제목</label>
+            <input type="text" id="modalNoteTitle" placeholder="핵심 인사이트 한 줄 요약" class="w-full text-xs p-2.5 rounded-xl border border-neutral-200 focus:outline-none focus:border-neutral-900">
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-neutral-600 mb-1">내용</label>
+            <textarea id="modalNoteContent" rows="4" placeholder="강의에서 강조한 원칙이나 배운 점을 적으세요..." class="w-full text-xs p-2.5 rounded-xl border border-neutral-200 focus:outline-none focus:border-neutral-900"></textarea>
+          </div>
+          <div class="flex justify-end gap-2 pt-2 border-t border-neutral-100">
+            <button onclick="closeModal()" class="px-3 py-1.5 text-xs text-neutral-600 rounded-xl hover:bg-neutral-100">취소</button>
+            <button id="saveNoteModalBtn" class="px-4 py-1.5 text-xs font-semibold text-white bg-neutral-900 rounded-xl hover:bg-neutral-800">저장</button>
+          </div>
+        </div>
+      `;
+      openModal(html);
+
+      document.getElementById('saveNoteModalBtn').addEventListener('click', () => {
+        const chapter = document.getElementById('modalNoteChapter').value.trim() || '기타';
+        const title = document.getElementById('modalNoteTitle').value.trim() || '무제 필기';
+        const content = document.getElementById('modalNoteContent').value.trim();
+        if (!content) {
+          showToast('내용을 입력해주세요.');
+          return;
+        }
+
+        const newNote = {
+          id: 'cnote_' + Date.now(),
+          chapter,
+          title,
+          content,
+          date: new Date().toISOString().slice(0, 10)
+        };
+        appState.customLectureNotes.unshift(newNote);
+        saveState();
+        closeModal();
+        renderLectureNotes();
+        showToast('강의 노트가 저장되었습니다.', 'success');
+      });
+    }
+
+    // ==========================================
+    // PAGE 2: 브레인덤프 (Brain Dump)
+    // ==========================================
+    let currentDumpFilter = 'all';
+    let selectedDumpTag = '아이디어';
+
+    function renderBrainDumpPage(container) {
+      container.innerHTML = `
+        <div class="space-y-5 sm:space-y-6">
+          
+          <!-- Header Card (Timer removed, quotes removed) -->
+          <div class="bg-white p-5 sm:p-7 rounded-3xl border border-neutral-200/60 shadow-soft">
+            <div>
+              <h2 class="text-lg sm:text-2xl font-extrabold text-neutral-900">브레인덤프 (Brain Dump)</h2>
+              <p class="text-xs text-neutral-500 mt-1 max-w-xl leading-relaxed">
+                그냥 손 가는 대로, 떠오르는 그대로 작성! 정리 전 생각은 믿지 말고 가공하지 마세요.
+              </p>
+            </div>
+
+            <!-- 3X Taller Rapid Dump Input -->
+            <div class="mt-4 p-3.5 sm:p-4 rounded-2xl bg-neutral-50/70 border border-neutral-200/80">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold text-neutral-900">생각 와다다다 쏟아내기 (줄바꿈으로 여러 개 작성 가능)</span>
+                <span class="text-[10px] text-neutral-400">Ctrl/Cmd + Enter 또는 작성완료</span>
+              </div>
+              <textarea 
+                id="brainDumpInput" 
+                rows="12" 
+                placeholder="머릿속에 떠오른 생각, 잡념, 할 일들을 편하게 와다다다 적으세요!&#10;줄바꿈(Enter)으로 여러 줄을 적으면 각각 독립된 생각 카드로 자동 분리 등록됩니다.&#10;&#10;예:&#10;기적의 메모 강의 2강 복습하기&#10;친구에게 감정 배제하고 연락해보기&#10;주말 기획안 초안 2장 작성&#10;다음 주 일정 미리 비워두기" 
+                class="w-full min-h-[260px] text-xs sm:text-sm p-3.5 rounded-xl border border-neutral-200 bg-white focus:outline-none focus:border-neutral-900 font-medium leading-relaxed resize-y"
+              ></textarea>
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mt-2.5">
+                <!-- 4 Clean Tags (Icons removed, Half button size) -->
+                <div class="flex items-center gap-1 overflow-x-auto no-scrollbar">
+                  <span class="text-[10px] font-bold text-neutral-400 shrink-0 mr-1">태그:</span>
+                  <button type="button" onclick="selectDumpTag('아이디어')" class="dump-tag-pill px-2 py-0.5 rounded-md text-[11px] font-bold transition-all ${selectedDumpTag === '아이디어' ? 'bg-neutral-900 text-white' : 'bg-white text-neutral-600 border border-neutral-200'}" data-tag="아이디어">아이디어</button>
+                  <button type="button" onclick="selectDumpTag('할일')" class="dump-tag-pill px-2 py-0.5 rounded-md text-[11px] font-medium transition-all ${selectedDumpTag === '할일' ? 'bg-neutral-900 text-white' : 'bg-white text-neutral-600 border border-neutral-200'}" data-tag="할일">할일</button>
+                  <button type="button" onclick="selectDumpTag('메모')" class="dump-tag-pill px-2 py-0.5 rounded-md text-[11px] font-medium transition-all ${selectedDumpTag === '메모' ? 'bg-neutral-900 text-white' : 'bg-white text-neutral-600 border border-neutral-200'}" data-tag="메모">메모</button>
+                  <button type="button" onclick="selectDumpTag('고민')" class="dump-tag-pill px-2 py-0.5 rounded-md text-[11px] font-medium transition-all ${selectedDumpTag === '고민' ? 'bg-neutral-900 text-white' : 'bg-white text-neutral-600 border border-neutral-200'}" data-tag="고민">고민</button>
+                </div>
+                <button id="submitDumpBtn" class="px-4 py-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-bold transition-all shrink-0 self-end sm:self-auto shadow-soft">
+                  작성완료
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Dump List & Filter (All 5 Filters: 전체, 아이디어, 할일, 메모, 고민) -->
+          <div class="bg-white p-5 sm:p-7 rounded-3xl border border-neutral-200/60 shadow-soft">
+            <div class="flex items-center justify-between gap-2 mb-4">
+              <div class="flex items-center gap-2">
+                <h3 class="text-sm sm:text-base font-bold text-neutral-900">비워낸 생각 원석</h3>
+                <span id="dumpActiveCountBadge" class="text-[11px] px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-700 font-bold">0개</span>
+              </div>
+              
+              <!-- 5 Filter Tabs -->
+              <div class="flex items-center gap-1 overflow-x-auto no-scrollbar">
+                <button onclick="filterDumpList('all')" class="dump-filter-btn px-2.5 py-1 rounded-xl text-xs font-semibold ${currentDumpFilter === 'all' ? 'bg-neutral-900 text-white' : 'text-neutral-600 hover:bg-neutral-100'}" data-filter="all">전체</button>
+                <button onclick="filterDumpList('아이디어')" class="dump-filter-btn px-2.5 py-1 rounded-xl text-xs font-medium ${currentDumpFilter === '아이디어' ? 'bg-neutral-900 text-white' : 'text-neutral-600 hover:bg-neutral-100'}" data-filter="아이디어">아이디어</button>
+                <button onclick="filterDumpList('할일')" class="dump-filter-btn px-2.5 py-1 rounded-xl text-xs font-medium ${currentDumpFilter === '할일' ? 'bg-neutral-900 text-white' : 'text-neutral-600 hover:bg-neutral-100'}" data-filter="할일">할일</button>
+                <button onclick="filterDumpList('메모')" class="dump-filter-btn px-2.5 py-1 rounded-xl text-xs font-medium ${currentDumpFilter === '메모' ? 'bg-neutral-900 text-white' : 'text-neutral-600 hover:bg-neutral-100'}" data-filter="메모">메모</button>
+                <button onclick="filterDumpList('고민')" class="dump-filter-btn px-2.5 py-1 rounded-xl text-xs font-medium ${currentDumpFilter === '고민' ? 'bg-neutral-900 text-white' : 'text-neutral-600 hover:bg-neutral-100'}" data-filter="고민">고민</button>
+              </div>
+            </div>
+
+            <!-- Items List -->
+            <div id="dumpItemsContainer" class="space-y-2">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+        </div>
+      `;
+
+      initBrainDumpLogic();
+      renderDumpItems(currentDumpFilter);
+    }
+
+    window.selectDumpTag = function(tag) {
+      selectedDumpTag = tag;
+      document.querySelectorAll('.dump-tag-pill').forEach(btn => {
+        if (btn.getAttribute('data-tag') === tag) {
+          btn.className = 'dump-tag-pill px-2 py-0.5 rounded-md text-[11px] font-bold bg-neutral-900 text-white transition-all';
+        } else {
+          btn.className = 'dump-tag-pill px-2 py-0.5 rounded-md text-[11px] font-medium bg-white text-neutral-600 border border-neutral-200 transition-all';
+        }
+      });
+    };
+
+    function initBrainDumpLogic() {
+      const textarea = document.getElementById('brainDumpInput');
+      const submitBtn = document.getElementById('submitDumpBtn');
+
+      const handleAdd = () => {
+        const raw = textarea.value.trim();
+        if (!raw) return;
+
+        const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+        if (lines.length === 0) return;
+
+        const now = new Date();
+        const dateStr = `${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+
+        lines.forEach(line => {
+          appState.brainDumps.unshift({
+            id: 'dump_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+            text: line,
+            tag: selectedDumpTag,
+            date: dateStr,
+            status: 'active'
+          });
+        });
+
+        saveState();
+        textarea.value = '';
+        renderDumpItems(currentDumpFilter);
+        // Silent addition
+      };
+
+      if (submitBtn) submitBtn.addEventListener('click', handleAdd);
+      if (textarea) {
+        textarea.addEventListener('keydown', (e) => {
+          if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            e.preventDefault();
+            handleAdd();
+          }
+        });
+      }
+
+      // Timer removed as requested
+    }
+
+    window.filterDumpList = function(tag) {
+      currentDumpFilter = tag;
+      document.querySelectorAll('.dump-filter-btn').forEach(btn => {
+        if (btn.getAttribute('data-filter') === tag) {
+          btn.className = 'dump-filter-btn px-2.5 py-1 rounded-xl text-xs font-semibold bg-neutral-900 text-white';
+        } else {
+          btn.className = 'dump-filter-btn px-2.5 py-1 rounded-xl text-xs font-medium text-neutral-600 hover:bg-neutral-100';
+        }
+      });
+      renderDumpItems(tag);
+    };
+
+    function renderDumpItems(filter = 'all') {
+      const container = document.getElementById('dumpItemsContainer');
+      const badge = document.getElementById('dumpActiveCountBadge');
+      if (!container) return;
+
+      const dumps = appState.brainDumps || [];
+      const filtered = dumps.filter(d => filter === 'all' || d.tag === filter);
+      const activeCount = dumps.filter(d => d.status === 'active').length;
+      if (badge) badge.textContent = `${activeCount}개 진행 중`;
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="py-8 text-center text-xs text-neutral-400">
+            해당 카테고리의 생각이 비어있습니다.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(d => {
+        const isDone = d.status === 'done';
+        return `
+          <div class="flex items-center justify-between p-3 rounded-2xl border transition-all ${
+            isDone ? 'bg-neutral-50/60 border-neutral-100 opacity-60' : 'bg-white border-neutral-200/60 hover:border-neutral-300'
+          }">
+            <div class="flex items-start gap-2.5 flex-1 min-w-0 pr-2">
+              <button onclick="toggleDumpStatus('${d.id}')" class="mt-0.5 w-4 h-4 rounded-md border flex items-center justify-center shrink-0 transition-colors ${
+                isDone ? 'bg-neutral-900 border-neutral-900 text-white' : 'border-neutral-300 hover:border-neutral-900'
+              }">
+                ${isDone ? '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>' : ''}
+              </button>
+              <div class="min-w-0">
+                <p class="text-xs sm:text-sm font-medium text-neutral-900 ${isDone ? 'line-through text-neutral-400' : ''}">${escapeHtml(d.text)}</p>
+                <div class="flex items-center gap-1.5 mt-1">
+                  <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-neutral-100 text-neutral-600">#${escapeHtml(d.tag)}</span>
+                  <span class="text-[10px] text-neutral-400">${escapeHtml(d.date)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-1 shrink-0">
+              <button onclick="sendDumpToVertical('${d.id}')" title="세 줄 노트로 분류" class="px-2 py-1 rounded-xl bg-neutral-50 hover:bg-neutral-100 text-neutral-700 text-[11px] font-semibold border border-neutral-200/60 transition-colors">
+                <span>세줄노트</span>
+              </button>
+              <button onclick="sendDumpToThoughtGathering('${d.id}')" title="계획과 할일 베이스로 등록" class="px-2 py-1 rounded-xl bg-neutral-50 hover:bg-neutral-100 text-neutral-700 text-[11px] font-semibold border border-neutral-200/60 transition-colors">
+                <span>할일</span>
+              </button>
+              <button onclick="deleteDump('${d.id}')" class="p-1 text-neutral-400 hover:text-red-500 rounded-lg text-xs">
+                ✕
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.toggleDumpStatus = function(id) {
+      const dump = appState.brainDumps.find(d => d.id === id);
+      if (dump) {
+        dump.status = dump.status === 'active' ? 'done' : 'active';
+        saveState();
+        renderDumpItems(currentDumpFilter);
+      }
+    };
+
+    window.deleteDump = function(id) {
+      appState.brainDumps = appState.brainDumps.filter(d => d.id !== id);
+      saveState();
+      renderDumpItems(currentDumpFilter);
+      showToast('생각 카드가 삭제되었습니다.');
+    };
+
+    window.sendDumpToVertical = function(id) {
+      const dump = appState.brainDumps.find(d => d.id === id);
+      if (!dump) return;
+      const active = getActiveVNote();
+      if (active) {
+        if (!active.rows) active.rows = [];
+        const emptyRow = active.rows.find(r => !r.fact.trim());
+        if (emptyRow) {
+          emptyRow.fact = dump.text;
+        } else {
+          active.rows.push({
+            fact: dump.text,
+            thought: ''
+          });
+        }
+        dump.status = 'done';
+        saveState();
+        renderDumpItems(currentDumpFilter);
+        showToast('세 줄 노트 표의 사실(Fact)로 즉시 추가되었습니다! 📏', 'success');
+      }
+    };
+
+    window.sendDumpToThoughtGathering = function(id) {
+      const dump = appState.brainDumps.find(d => d.id === id);
+      if (!dump) return;
+      
+      const tg = appState.thoughtGathering;
+      if (!tg.leftItems) tg.leftItems = [];
+      const existingNums = tg.leftItems.map(i => i.num);
+      let nextNum = 1;
+      while (existingNums.includes(nextNum)) {
+        nextNum++;
+      }
+      const colorObj = getPresetColor(nextNum);
+
+      tg.leftItems.push({
+        id: 'base_' + Date.now(),
+        num: nextNum,
+        text: dump.text,
+        color: colorObj.id,
+        completed: false
+      });
+      activeBaseNum = nextNum;
+      dump.status = 'done';
+      saveState();
+      renderDumpItems(currentDumpFilter);
+      showToast(`계획과 할일 베이스 ${nextNum}번으로 등록되었습니다! 🎯`, 'success');
+    };
+
+
+    // ==========================================
+    // PAGE 3: 세로줄 노트 (세 줄 노트)
+    // (사용자 요청: Step 문구 제거, 불필요 텍스트 제거, 지난 노트 팝업 모달, 아이폰 3색 점)
+    // ==========================================
+    let activeVNoteId = null;
+
+    function getActiveVNote() {
+      const notes = appState.verticalNotes || [];
+      if (notes.length === 0) return null;
+      let active = notes.find(n => n.id === activeVNoteId);
+      if (!active) {
+        active = notes[0];
+        activeVNoteId = active.id;
+      }
+      if (!active.rows) active.rows = [];
+      while (active.rows.length < 5) {
+        active.rows.push({ fact: '', thought: '' });
+      }
+      return active;
+    }
+
+    function renderVerticalLinePage(container) {
+      const notes = appState.verticalNotes || [];
+      const activeNote = getActiveVNote();
+
+      container.innerHTML = `
+        <div class="space-y-5 sm:space-y-6">
+          
+          <!-- Banner & Explanation (Cleaned: No Step label, no clutter text) -->
+          <div class="bg-white p-5 sm:p-7 rounded-3xl border border-neutral-200/60 shadow-soft">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h2 class="text-lg sm:text-2xl font-extrabold text-neutral-900">세 줄 노트</h2>
+                <p class="text-xs text-neutral-500 mt-1 max-w-xl leading-relaxed">
+                  왼쪽엔 일어난 <b>사실(Fact)</b>, 오른쪽엔 <b>생각/질문(Thought)</b>을 적고, 아래에 <b>결과 및 결론</b>을 도출합니다.
+                </p>
+              </div>
+
+              <!-- Top Actions: Note List Modal & New Note Button -->
+              <div class="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+                <button onclick="openVNoteListModal()" class="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-bold border border-neutral-200/80 transition-all shadow-soft">
+                  <svg class="w-3.5 h-3.5 text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                  <span>지난 세 줄 노트 목록 (${notes.length}권)</span>
+                </button>
+                <button onclick="addNewVNoteSheet()" class="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-neutral-900 text-white text-xs font-bold hover:bg-neutral-800 transition-colors shadow-soft">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                  <span>새 세 줄 노트</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Active Note Quick Info Bar (Replaces horizontal drag tabs) -->
+            <div class="mt-4 pt-3.5 border-t border-neutral-100 flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="text-xs font-bold text-neutral-400">현재 노트:</span>
+                <span class="text-xs sm:text-sm font-extrabold text-neutral-900 truncate bg-neutral-100 px-2.5 py-1 rounded-xl">${escapeHtml(activeNote?.title || '무제 노트')}</span>
+                <span class="text-[11px] text-neutral-400 font-mono hidden sm:inline">(${escapeHtml(activeNote?.date || '')})</span>
+              </div>
+              <button onclick="openVNoteListModal()" class="text-xs text-neutral-600 hover:text-neutral-900 font-semibold underline shrink-0">
+                다른 노트로 전환 ▾
+              </button>
+            </div>
+          </div>
+
+          <!-- Active Note Sheet Canvas -->
+          <div id="activeVNoteCanvasContainer">
+            <!-- Rendered dynamically -->
+          </div>
+
+        </div>
+      `;
+
+      renderActiveVNoteCanvas();
+      // Adjust height of textareas
+      setTimeout(() => {
+        document.querySelectorAll('.v-auto-expand').forEach(t => adjustTextareaHeight(t));
+      }, 10);
+    }
+
+    function adjustTextareaHeight(el) {
+      if (!el) return;
+      el.style.height = 'auto';
+      el.style.height = Math.max(el.scrollHeight, 38) + 'px';
+    }
+
+    function renderActiveVNoteCanvas() {
+      const container = document.getElementById('activeVNoteCanvasContainer');
+      if (!container) return;
+
+      const activeNote = getActiveVNote();
+      if (!activeNote) {
+        container.innerHTML = `
+          <div class="bg-white p-10 rounded-3xl border border-neutral-200/60 text-center text-xs text-neutral-400">
+            작성된 세 줄 노트가 없습니다. [새 세 줄 노트] 버튼을 눌러 시작하세요.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="bg-white rounded-3xl border border-neutral-200/70 shadow-soft overflow-hidden relative">
+          
+          <!-- Apple / iPhone Style Window Header (Red, Yellow, Green dots) -->
+          <div class="bg-neutral-100/90 px-4 sm:px-6 py-2.5 border-b border-neutral-200/60 flex items-center justify-between">
+            <div class="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0 pr-2">
+              <!-- iPhone / Mac traffic light 3 dots -->
+              <div class="flex items-center gap-1.5 shrink-0 px-1 py-1" title="아이폰 / macOS 스타일">
+                <span class="w-3 h-3 rounded-full bg-[#FF5F56] border border-black/10 inline-block shadow-sm"></span>
+                <span class="w-3 h-3 rounded-full bg-[#FFBD2E] border border-black/10 inline-block shadow-sm"></span>
+                <span class="w-3 h-3 rounded-full bg-[#27C93F] border border-black/10 inline-block shadow-sm"></span>
+              </div>
+              <!-- Editable Note Title -->
+              <input 
+                type="text" 
+                value="${escapeHtml(activeNote.title || '무제 세 줄 노트')}" 
+                oninput="updateActiveVNoteTitle(this.value)"
+                title="클릭하여 제목 수정"
+                class="text-xs sm:text-sm font-extrabold text-neutral-900 bg-transparent hover:bg-white focus:bg-white border border-transparent focus:border-neutral-300 rounded-lg px-2 py-0.5 focus:outline-none transition-all truncate flex-1 max-w-md"
+              >
+            </div>
+            
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="text-[10px] text-neutral-400 font-mono">${escapeHtml(activeNote.date || '')}</span>
+              <button onclick="deleteActiveVNote()" class="text-neutral-400 hover:text-red-500 text-xs px-2 py-1 rounded-lg hover:bg-red-50 transition-colors">
+                노트 삭제
+              </button>
+            </div>
+          </div>
+
+          <!-- Main Note Body: 2-Column Table -->
+          <div class="p-4 sm:p-7 space-y-5">
+            
+            <!-- Table Header (Center Aligned to Match Columns Below) -->
+            <div class="grid grid-cols-12 bg-neutral-100/80 border border-neutral-200/70 rounded-2xl py-2 px-3 text-xs font-bold text-neutral-800">
+              <div class="col-span-1 text-center text-neutral-400">#</div>
+              <div class="col-span-5 text-center text-neutral-900">
+                <span>사실 (Fact)</span>
+              </div>
+              <div class="col-span-5 text-center text-neutral-900">
+                <span>생각 (Question)</span>
+              </div>
+              <div class="col-span-1 text-center text-neutral-400 text-[10px]">삭제</div>
+            </div>
+
+            <!-- Table Rows (Multiline Auto-expanding for Fact & Question) -->
+            <div class="space-y-2">
+              ${activeNote.rows.map((row, rIdx) => `
+                <div class="grid grid-cols-12 items-start p-2 rounded-2xl bg-neutral-50/70 border border-neutral-200/60 hover:bg-white hover:border-neutral-300 transition-all">
+                  <div class="col-span-1 text-center text-[11px] font-bold text-neutral-400 pt-2.5 font-['Tuffy']">${rIdx + 1}</div>
+                  <div class="col-span-5 pr-1">
+                    <textarea 
+                      rows="2" 
+                      oninput="adjustTextareaHeight(this); updateVRowFact(${rIdx}, this.value)"
+                      placeholder="사실 기재..." 
+                      class="v-auto-expand w-full text-xs p-2.5 rounded-xl border border-neutral-200 bg-white focus:outline-none focus:border-neutral-900 font-medium transition-all resize-none overflow-hidden leading-relaxed block"
+                    >${escapeHtml(row.fact)}</textarea>
+                  </div>
+                  <div class="col-span-5 pl-1">
+                    <textarea 
+                      rows="2" 
+                      oninput="adjustTextareaHeight(this); updateVRowThought(${rIdx}, this.value)"
+                      placeholder="생각/질문 기재... (엔터로 줄바꿈 가능)" 
+                      class="v-auto-expand w-full text-xs p-2.5 rounded-xl border border-neutral-200 bg-white focus:outline-none focus:border-neutral-900 font-medium transition-all resize-none overflow-hidden leading-relaxed block"
+                    >${escapeHtml(row.thought)}</textarea>
+                  </div>
+                  <div class="col-span-1 text-center pt-2">
+                    <button onclick="deleteVRow(${rIdx})" class="text-neutral-300 hover:text-red-500 p-1 rounded-lg text-xs transition-colors" title="행 삭제">
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+
+            <!-- Table Controls: Add Row (Clutter text removed) -->
+            <div class="flex items-center justify-between pt-1">
+              <button onclick="addVRow()" class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-neutral-900 text-white text-xs font-bold hover:bg-neutral-800 transition-colors shadow-soft">
+                <span>+ 행 추가하기</span>
+              </button>
+            </div>
+
+            <!-- RESULT & CONCLUSION -->
+            <div class="mt-4 pt-4 border-t border-dashed border-neutral-200">
+              <div class="p-4 rounded-2xl bg-sand-50/80 border border-sand-200/70">
+                <div class="flex items-center justify-between mb-1.5">
+                  <div class="flex items-center gap-1.5 text-xs font-bold text-neutral-900">
+                    <span class="text-sm">✨</span>
+                    <span>결과 및 결론 (Outcome & Conclusion)</span>
+                  </div>
+                  <span class="text-[10px] text-neutral-400">입력 즉시 자동 저장됩니다.</span>
+                </div>
+                <textarea 
+                  rows="3" 
+                  oninput="updateActiveVNoteConclusion(this.value)"
+                  placeholder="사실과 생각을 대조하여 얻은 최종적인 깨달음이나 감정의 정리를 적으세요..."
+                  class="w-full text-xs p-2.5 rounded-xl border border-sand-200 bg-white focus:outline-none focus:border-neutral-900 text-neutral-800 leading-relaxed transition-all"
+                >${escapeHtml(activeNote.conclusion || '')}</textarea>
+              </div>
+            </div>
+
+            <!-- ACTION PLAN: Optional -->
+            <div class="p-4 rounded-2xl bg-neutral-900 text-white space-y-2">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20">자발적 할일 (선택사항)</span>
+                  <span class="text-[11px] text-neutral-300 font-medium">실행할 액션이 있는 경우에만 적으세요!</span>
+                </div>
+                ${activeNote.actionPlan ? `
+                  <button onclick="clearActiveVAction()" class="text-[10px] text-neutral-400 hover:text-white">비우기</button>
+                ` : ''}
+              </div>
+              <p class="text-[10px] text-neutral-400 leading-relaxed">
+                💡 <b>용도 안내:</b> 문제 상황을 정리한 뒤 오늘 즉시 실천할 행동이 있는 경우에 적는 칸입니다. 단순 감정 정리나 생각 반추라면 <b>비워두셔도 완전히 무방합니다.</b>
+              </p>
+              <div class="flex flex-col sm:flex-row gap-2 pt-1">
+                <input 
+                  type="text" 
+                  value="${escapeHtml(activeNote.actionPlan || '')}" 
+                  oninput="updateActiveVNoteAction(this.value)"
+                  placeholder="예: 오늘 저녁 감정 배제하고 담백하게 메시지 보내기 (할 일이 없으면 비워두세요)" 
+                  class="flex-1 text-xs bg-neutral-800 border border-neutral-700 rounded-xl px-3 py-2 text-white placeholder-neutral-500 focus:outline-none focus:border-white transition-all"
+                >
+                ${activeNote.actionPlan ? `
+                  <button onclick="sendActiveVActionToPlan()" class="px-3.5 py-2 rounded-xl bg-white text-neutral-900 text-xs font-bold hover:bg-neutral-100 transition-colors shrink-0">
+                    + 생각 모으기로 전송 🎯
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      `;
+    }
+
+    // Modal for Past Vertical Notes List (Pop-up search & manage)
+    window.openVNoteListModal = function() {
+      const notes = appState.verticalNotes || [];
+      const activeNote = getActiveVNote();
+
+      const updateModalList = () => {
+        const searchVal = document.getElementById('vnoteSearchInput')?.value.toLowerCase().trim() || '';
+        const listContainer = document.getElementById('vnoteModalListContainer');
+        if (!listContainer) return;
+
+        const list = notes.filter(n => {
+          if (!searchVal) return true;
+          const titleMatch = (n.title || '').toLowerCase().includes(searchVal);
+          const factMatch = (n.rows || []).some(r => (r.fact || '').toLowerCase().includes(searchVal) || (r.thought || '').toLowerCase().includes(searchVal));
+          return titleMatch || factMatch;
+        });
+
+        if (list.length === 0) {
+          listContainer.innerHTML = `<div class="p-8 text-center text-xs text-neutral-400 bg-neutral-50 rounded-2xl">검색 결과가 없습니다.</div>`;
+          return;
+        }
+
+        listContainer.innerHTML = list.map(n => {
+          const isCurrent = activeNote && n.id === activeNote.id;
+          const filledCount = (n.rows || []).filter(r => r.fact.trim() || r.thought.trim()).length;
+          const firstFact = (n.rows || []).find(r => r.fact.trim())?.fact || '작성된 내용 없음';
+
+          return `
+            <div class="p-3.5 rounded-2xl border transition-all ${
+              isCurrent ? 'bg-neutral-900 text-white border-neutral-900 shadow-soft' : 'bg-neutral-50/80 border-neutral-200/70 hover:bg-white hover:border-neutral-300 text-neutral-900'
+            }">
+              <div class="flex items-center justify-between mb-1">
+                <div class="flex items-center gap-2 min-w-0 pr-2">
+                  <span class="text-xs sm:text-sm font-bold truncate">${escapeHtml(n.title || '무제 노트')}</span>
+                  ${isCurrent ? '<span class="text-[9px] px-2 py-0.5 rounded-full bg-white/20 text-white font-extrabold shrink-0">현재 열림</span>' : ''}
+                </div>
+                <span class="text-[10px] ${isCurrent ? 'text-neutral-400' : 'text-neutral-400'} font-mono shrink-0">${escapeHtml(n.date || '')}</span>
+              </div>
+
+              <p class="text-xs ${isCurrent ? 'text-neutral-300' : 'text-neutral-500'} truncate mb-2">
+                "${escapeHtml(firstFact)}"
+              </p>
+
+              <div class="flex items-center justify-between text-xs pt-2 border-t ${isCurrent ? 'border-neutral-800' : 'border-neutral-200/50'}">
+                <span class="text-[10px] ${isCurrent ? 'text-neutral-400' : 'text-neutral-400'}">작성 행: ${filledCount}개</span>
+                <div class="flex items-center gap-1.5">
+                  ${!isCurrent ? `
+                    <button onclick="selectVNoteFromModal('${n.id}')" class="px-3 py-1 rounded-xl bg-neutral-900 text-white text-xs font-bold hover:bg-neutral-800 transition-colors">
+                      열기
+                    </button>
+                  ` : `
+                    <span class="text-xs font-bold text-amber-300">작성 중 ✓</span>
+                  `}
+                  <button onclick="deleteVNoteFromModal('${n.id}')" class="px-2 py-1 text-xs text-neutral-400 hover:text-red-500 rounded-lg transition-colors" title="삭제">
+                    삭제
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      };
+
+      const html = `
+        <div class="space-y-3.5 max-h-[80vh] flex flex-col">
+          <div class="flex items-center justify-between pb-2 border-b border-neutral-100">
+            <div>
+              <h4 class="text-sm sm:text-base font-bold text-neutral-900">📂 지난 세 줄 노트 목록 (${notes.length}권)</h4>
+              <p class="text-[11px] text-neutral-400 mt-0.5">30권이 넘어가도 검색창으로 원하는 노트를 손쉽게 찾아 열 수 있습니다.</p>
+            </div>
+            <button onclick="closeModal()" class="text-neutral-400 hover:text-neutral-900 text-sm">✕</button>
+          </div>
+
+          <!-- Search input -->
+          <div>
+            <input 
+              type="text" 
+              id="vnoteSearchInput" 
+              placeholder="노트 제목 또는 사실 내용으로 검색..." 
+              class="w-full text-xs p-2.5 rounded-xl border border-neutral-200 bg-neutral-50 focus:bg-white focus:outline-none focus:border-neutral-900 font-medium"
+            >
+          </div>
+
+          <!-- Notes list -->
+          <div id="vnoteModalListContainer" class="overflow-y-auto space-y-2 pr-1 flex-1">
+            <!-- Rendered via JS -->
+          </div>
+
+          <div class="flex justify-between items-center pt-2 border-t border-neutral-100 text-xs">
+            <button onclick="addNewVNoteFromModal()" class="text-xs font-bold text-neutral-900 hover:underline">
+              + 새 세 줄 노트 만들기
+            </button>
+            <button onclick="closeModal()" class="px-4 py-1.5 text-xs text-neutral-600 rounded-xl hover:bg-neutral-100 font-semibold">닫기</button>
+          </div>
+        </div>
+      `;
+
+      openModal(html);
+      updateModalList();
+
+      const searchInput = document.getElementById('vnoteSearchInput');
+      if (searchInput) {
+        searchInput.addEventListener('input', updateModalList);
+      }
+    };
+
+    window.selectVNoteFromModal = function(id) {
+      selectVNote(id);
+      closeModal();
+    };
+
+    window.addNewVNoteFromModal = function() {
+      closeModal();
+      addNewVNoteSheet();
+    };
+
+    window.deleteVNoteFromModal = function(id) {
+      appState.verticalNotes = appState.verticalNotes.filter(n => n.id !== id);
+      if (activeVNoteId === id) {
+        activeVNoteId = appState.verticalNotes[0]?.id || null;
+      }
+      saveState();
+      openVNoteListModal();
+      const container = document.getElementById('pageViewContainer');
+      if (container && appState.activeTab === 'verticalline') {
+        renderVerticalLinePage(container);
+      }
+      showToast('노트가 삭제되었습니다.');
+    };
+
+    window.selectVNote = function(id) {
+      activeVNoteId = id;
+      renderActiveVNoteCanvas();
+      const container = document.getElementById('pageViewContainer');
+      if (container && appState.activeTab === 'verticalline') {
+        renderVerticalLinePage(container);
+      }
+    };
+
+    window.addNewVNoteSheet = function() {
+      const newId = 'vnote_' + Date.now();
+      const newNote = {
+        id: newId,
+        title: '새 세 줄 노트 ' + (appState.verticalNotes.length + 1),
+        date: new Date().toISOString().slice(0, 10),
+        category: '자율 정리',
+        rows: [
+          { fact: '', thought: '' },
+          { fact: '', thought: '' },
+          { fact: '', thought: '' },
+          { fact: '', thought: '' },
+          { fact: '', thought: '' }
+        ],
+        conclusion: '',
+        actionPlan: ''
+      };
+      appState.verticalNotes.unshift(newNote);
+      activeVNoteId = newId;
+      saveState();
+      renderVerticalLinePage(document.getElementById('pageViewContainer'));
+      showToast('새 세 줄 노트가 펼쳐졌습니다!', 'success');
+    };
+
+    window.deleteActiveVNote = function() {
+      const active = getActiveVNote();
+      if (!active) return;
+      appState.verticalNotes = appState.verticalNotes.filter(n => n.id !== active.id);
+      activeVNoteId = appState.verticalNotes[0]?.id || null;
+      saveState();
+      renderVerticalLinePage(document.getElementById('pageViewContainer'));
+      showToast('노트가 삭제되었습니다.');
+    };
+
+    window.updateActiveVNoteTitle = function(title) {
+      const active = getActiveVNote();
+      if (active) {
+        active.title = title.trim() || '무제 세 줄 노트';
+        saveState();
+      }
+    };
+
+    window.updateVRowFact = function(index, value) {
+      const active = getActiveVNote();
+      if (active && active.rows && active.rows[index]) {
+        active.rows[index].fact = value;
+        saveState();
+      }
+    };
+
+    window.updateVRowThought = function(index, value) {
+      const active = getActiveVNote();
+      if (active && active.rows && active.rows[index]) {
+        active.rows[index].thought = value;
+        saveState();
+      }
+    };
+
+    window.addVRow = function() {
+      const active = getActiveVNote();
+      if (active) {
+        if (!active.rows) active.rows = [];
+        active.rows.push({ fact: '', thought: '' });
+        saveState();
+        renderActiveVNoteCanvas();
+      }
+    };
+
+    window.deleteVRow = function(rowIndex) {
+      const active = getActiveVNote();
+      if (active && active.rows) {
+        active.rows.splice(rowIndex, 1);
+        if (active.rows.length === 0) {
+          active.rows.push({ fact: '', thought: '' });
+        }
+        saveState();
+        renderActiveVNoteCanvas();
+      }
+    };
+
+    window.updateActiveVNoteConclusion = function(text) {
+      const active = getActiveVNote();
+      if (active) {
+        active.conclusion = text;
+        saveState();
+      }
+    };
+
+    window.updateActiveVNoteAction = function(text) {
+      const active = getActiveVNote();
+      if (active) {
+        active.actionPlan = text;
+        saveState();
+      }
+    };
+
+    window.clearActiveVAction = function() {
+      const active = getActiveVNote();
+      if (active) {
+        active.actionPlan = '';
+        saveState();
+        renderActiveVNoteCanvas();
+      }
+    };
+
+    window.sendActiveVActionToPlan = function() {
+      const active = getActiveVNote();
+      if (!active || !active.actionPlan) {
+        showToast('등록할 자발적 할일이 없습니다.');
+        return;
+      }
+
+      const tg = appState.thoughtGathering;
+      if (!tg.leftItems) tg.leftItems = [];
+      const existingNums = tg.leftItems.map(i => i.num);
+      let nextNum = 1;
+      while (existingNums.includes(nextNum)) {
+        nextNum++;
+      }
+      const colorObj = getPresetColor(nextNum);
+
+      tg.leftItems.push({
+        id: 'base_' + Date.now(),
+        num: nextNum,
+        text: active.actionPlan,
+        color: colorObj.id,
+        completed: false
+      });
+      activeBaseNum = nextNum;
+      saveState();
+      showToast(`계획과 할일 베이스 ${nextNum}번으로 전송되었습니다! 🎯`, 'success');
+    };
+
+
+    // ==========================================
+    // PAGE 4: 계획과 할일 (생각 모으기 시스템)
+    // (사용자 요청: Step/소요시간/# 전면 제거, 베이스와 파생 자동 연결, 지난 보관함 세션 저장)
+    // ==========================================
+    function renderPlanTaskPage(container) {
+      const archives = appState.thoughtGatheringArchives || [];
+
+      container.innerHTML = `
+        <div class="space-y-5 sm:space-y-6">
+          
+          <!-- Banner: Thought Gathering Header -->
+          <div class="bg-white p-5 sm:p-7 rounded-3xl border border-neutral-200/60 shadow-soft">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h2 class="text-lg sm:text-2xl font-extrabold text-neutral-900">계획과 할일</h2>
+                <p class="text-xs text-neutral-500 mt-1 max-w-xl leading-relaxed">
+                  왼쪽 <b>계획</b>을 적고 <b>[+ 할 일]</b>을 누르면 오른쪽에서 연관된 할 일들을 빠르게 정리할 수 있습니다.
+                </p>
+              </div>
+
+              <!-- Top Actions: Save Board, Archive Modal, New Board -->
+              <div class="flex flex-wrap items-center gap-2 self-start sm:self-auto shrink-0">
+                <button onclick="saveCurrentTGBoard()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-neutral-900 text-white text-xs font-bold hover:bg-neutral-800 transition-colors shadow-soft">
+                  <span>💾 현재 보드 저장</span>
+                </button>
+                <button onclick="openTGArchiveModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-neutral-200 bg-neutral-100/80 hover:bg-neutral-200 text-neutral-700 text-xs font-bold transition-colors">
+                  <span>📂 지난 보관함 (${archives.length})</span>
+                </button>
+                <button onclick="startNewTGBoard()" class="px-2.5 py-1.5 rounded-xl border border-neutral-200 text-neutral-500 hover:text-neutral-900 text-xs font-semibold hover:bg-neutral-50 transition-colors" title="새 보드로 캔버스 비우기">
+                  ➕ 새 보드
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Thought Gathering Whiteboard: Central Vertical Line Divider -->
+          <div class="bg-white rounded-3xl border border-neutral-200/70 shadow-soft p-4 sm:p-7">
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 divide-y sm:divide-y-0 sm:divide-x-2 divide-neutral-200">
+              
+              <!-- Left Column: Base Tasks (베이스 할 일) -->
+              <div class="pr-0 sm:pr-5 pt-2 sm:pt-0 space-y-3">
+                <div class="flex items-center justify-between pb-2 border-b border-neutral-100">
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-neutral-900"></span>
+                    <span class="text-xs font-bold text-neutral-900">계획</span>
+                  </div>
+                </div>
+
+                <!-- Direct Add Input (Base) -->
+                <div class="flex gap-1.5">
+                  <input 
+                    type="text" 
+                    id="directLeftInput" 
+                    placeholder="엔터로 추가" 
+                    class="flex-1 text-xs p-2.5 rounded-xl border border-neutral-200 bg-neutral-50 focus:bg-white focus:outline-none focus:border-neutral-900 font-medium"
+                    onkeydown="if(event.isComposing || event.keyCode === 229) return; if(event.key==='Enter'){event.preventDefault();submitDirectBaseTask();}"
+                  >
+                  <button onclick="submitDirectBaseTask()" class="px-3.5 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-bold rounded-xl transition-colors shrink-0">
+                    추가
+                  </button>
+                </div>
+
+                <!-- Left Items List -->
+                <div id="tgLeftList" class="space-y-2 pt-1">
+                  <!-- Rendered via JS -->
+                </div>
+              </div>
+
+              <!-- Right Column: Derived Tasks (파생 할 일) -->
+              <div class="pl-0 sm:pl-5 pt-5 sm:pt-0 space-y-3">
+                <div class="flex items-center justify-between pb-2 border-b border-neutral-100">
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                    <span class="text-xs font-bold text-neutral-900">할 일</span>
+                  </div>
+                </div>
+
+                <!-- Active Base Parent Banner / Quick Selector -->
+                <div id="tgActiveBaseIndicator" class="p-2 rounded-xl bg-neutral-50 border border-neutral-200/80 flex items-center justify-between">
+                  <!-- Populated via JS -->
+                </div>
+
+                <!-- Direct Add Input (Derived) -->
+                <div class="flex gap-1.5">
+                  <input 
+                    type="text" 
+                    id="directRightInput" 
+                    placeholder="엔터로 추가" 
+                    class="flex-1 text-xs p-2.5 rounded-xl border border-neutral-200 bg-neutral-50 focus:bg-white focus:outline-none focus:border-neutral-900 font-medium"
+                    onkeydown="if(event.isComposing || event.keyCode === 229) return; if(event.key==='Enter'){event.preventDefault();submitDirectDerivedTask();}"
+                  >
+                  <button onclick="submitDirectDerivedTask()" class="px-3.5 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-bold rounded-xl transition-colors shrink-0">
+                    추가
+                  </button>
+                </div>
+
+                <!-- Right Items List -->
+                <div id="tgRightList" class="space-y-2 pt-1">
+                  <!-- Rendered via JS -->
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- Grouped Project Summary (베이스 + 파생 모아보기) -->
+          <div class="bg-white p-5 sm:p-7 rounded-3xl border border-neutral-200/60 shadow-soft">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h3 class="text-xs sm:text-sm font-bold text-neutral-900">계획과 할일 모아보기</h3>
+                <p class="text-[11px] text-neutral-400 mt-0.5">각 계획과 연결된 할 일들이 하나의 실행 패키지로 묶여 있습니다.</p>
+              </div>
+            </div>
+            <div id="tgGroupedContainer" class="space-y-3">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+        </div>
+      `;
+
+      renderThoughtGatheringView();
+    }
+
+    function renderThoughtGatheringView() {
+      const leftContainer = document.getElementById('tgLeftList');
+      const rightContainer = document.getElementById('tgRightList');
+      const groupedContainer = document.getElementById('tgGroupedContainer');
+      const indicatorContainer = document.getElementById('tgActiveBaseIndicator');
+
+      if (!leftContainer || !rightContainer) return;
+
+      const tg = appState.thoughtGathering || { leftItems: [], rightItems: [] };
+      const left = tg.leftItems || [];
+      const right = tg.rightItems || [];
+
+      // Validate activeBaseNum
+      if (left.length > 0 && !left.some(i => i.num === activeBaseNum)) {
+        activeBaseNum = left[0].num;
+      }
+
+      // Render Active Base Indicator in Right Column
+      if (indicatorContainer) {
+        if (left.length === 0) {
+          indicatorContainer.innerHTML = `
+            <span class="text-xs text-neutral-400">왼쪽에 먼저 베이스 할 일을 추가해주세요.</span>
+          `;
+        } else {
+          const activeItem = left.find(i => i.num === activeBaseNum) || left[0];
+          const colorObj = getPresetColor(activeItem.num);
+
+          indicatorContainer.innerHTML = `
+            <div class="flex items-center gap-1.5 flex-1 min-w-0 pr-1">
+              <span class="text-xs font-extrabold px-2 py-0.5 rounded-lg border ${colorObj.badgeClass} truncate max-w-[180px]">
+                ${activeItem.num}. ${escapeHtml(activeItem.text)}
+              </span>
+            </div>
+            <!-- Quick switcher dropdown if multiple base tasks -->
+            <select onchange="setActiveBaseNum(this.value)" class="text-[11px] font-bold text-neutral-700 bg-white border border-neutral-200 rounded-lg px-2 py-1 shrink-0 focus:outline-none">
+              ${left.map(i => `
+                <option value="${i.num}" ${i.num === activeBaseNum ? 'selected' : ''}>
+                  ${i.num}번 (${escapeHtml(i.text.slice(0, 8))}...)
+                </option>
+              `).join('')}
+            </select>
+          `;
+        }
+      }
+
+      // Render Left (Base) Item Card
+      const renderBaseRow = (item) => {
+        const isDone = item.completed;
+        const colorObj = getPresetColor(item.num);
+        const isActiveForDerive = item.num === activeBaseNum;
+
+        return `
+          <div class="p-2 sm:p-2.5 rounded-xl transition-all space-y-1 ${
+            isActiveForDerive ? 'bg-white border-2 border-neutral-900 shadow-soft' : 'bg-neutral-50/80 border border-neutral-200/70 hover:bg-white hover:border-neutral-300'
+          } ${isDone ? 'opacity-60' : ''}">
+            
+            <div class="flex items-center justify-between gap-1">
+              <div class="flex items-center gap-1.5">
+                <button onclick="toggleTGBaseTask('${item.id}')" title="완료 토글" class="w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ${isDone ? 'bg-neutral-900 border-neutral-900 text-white' : 'border-neutral-300 hover:border-neutral-900'}">
+                  ${isDone ? '✓' : ''}
+                </button>
+                <!-- Number Badge: 30% more compact -->
+                <span class="text-[10px] font-black px-1.5 py-0.5 rounded-md border ${colorObj.badgeClass} font-['Tuffy']">
+                  ${item.num}
+                </span>
+              </div>
+
+              <!-- Action: [+ 할 일] Button & Delete (30% more compact) -->
+              <div class="flex items-center gap-1">
+                <button onclick="setActiveBaseNum(${item.num})" class="px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all ${
+                  isActiveForDerive ? 'bg-neutral-900 text-white shadow-soft' : 'bg-white border border-neutral-200 text-neutral-800 hover:bg-neutral-100'
+                }" title="할 일 작성하기">
+                  <span>${isActiveForDerive ? '작성 중' : '+ 할 일'}</span>
+                </button>
+                <button onclick="deleteTGBaseItem('${item.id}')" class="text-neutral-300 hover:text-red-500 text-xs px-1" title="삭제">✕</button>
+              </div>
+            </div>
+
+            <!-- Auto-expanding Multiline Textarea (No Scrollbar, expands to show all content) -->
+            <div>
+              <textarea 
+                rows="1" 
+                oninput="adjustTextareaHeight(this); updateTGBaseText('${item.id}', this.value)"
+                class="v-auto-expand w-full text-xs font-bold text-neutral-900 pb-0.5 ${colorObj.hlClass} ${isDone ? 'line-through text-neutral-400' : ''} bg-transparent focus:bg-white focus:outline-none border-b border-transparent focus:border-neutral-300 rounded px-1 transition-all resize-none overflow-hidden leading-relaxed block"
+              >${escapeHtml(item.text)}</textarea>
+            </div>
+
+          </div>
+        `;
+      };
+
+      // Render Right (Derived) Item Card
+      const renderDerivedRow = (item) => {
+        const isDone = item.completed;
+        const colorObj = getPresetColor(item.num);
+
+        return `
+          <div class="p-2 sm:p-2.5 rounded-xl bg-neutral-50/80 border border-neutral-200/70 hover:bg-white hover:border-neutral-300 transition-all space-y-1 ${isDone ? 'opacity-60' : ''}">
+            
+            <div class="flex items-center justify-between gap-1">
+              <div class="flex items-center gap-1.5">
+                <button onclick="toggleTGDerivedTask('${item.id}')" title="완료 토글" class="w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ${isDone ? 'bg-neutral-900 border-neutral-900 text-white' : 'border-neutral-300 hover:border-neutral-900'}">
+                  ${isDone ? '✓' : ''}
+                </button>
+                <!-- Number Badge: 30% more compact -->
+                <span class="text-[10px] font-black px-1.5 py-0.5 rounded-md border ${colorObj.badgeClass} font-['Tuffy']">
+                  ${item.num}
+                </span>
+              </div>
+
+              <!-- Delete Button -->
+              <div class="flex items-center gap-1">
+                <button onclick="deleteTGDerivedItem('${item.id}')" class="text-neutral-300 hover:text-red-500 text-xs px-1" title="삭제">✕</button>
+              </div>
+            </div>
+
+            <!-- Auto-expanding Multiline Textarea (No Scrollbar, expands to show all content) -->
+            <div>
+              <textarea 
+                rows="1" 
+                oninput="adjustTextareaHeight(this); updateTGDerivedText('${item.id}', this.value)"
+                class="v-auto-expand w-full text-xs font-semibold text-neutral-900 pb-0.5 ${colorObj.hlClass} ${isDone ? 'line-through text-neutral-400' : ''} bg-transparent focus:bg-white focus:outline-none border-b border-transparent focus:border-neutral-300 rounded px-1 transition-all resize-none overflow-hidden leading-relaxed block"
+              >${escapeHtml(item.text)}</textarea>
+            </div>
+
+          </div>
+        `;
+      };
+
+      // Populate Left Column
+      if (left.length === 0) {
+        leftContainer.innerHTML = '';
+      } else {
+        leftContainer.innerHTML = left.map(item => renderBaseRow(item)).join('');
+      }
+
+      // Populate Right Column
+      if (right.length === 0) {
+        rightContainer.innerHTML = '';
+      } else {
+        rightContainer.innerHTML = right.map(item => renderDerivedRow(item)).join('');
+      }
+
+      // Render Grouped Section (Base + Derived)
+      if (groupedContainer) {
+        if (left.length === 0) {
+          groupedContainer.innerHTML = `<div class="p-4 text-center text-xs text-neutral-400">모아진 할 일이 없습니다.</div>`;
+        } else {
+          setTimeout(() => {
+        document.querySelectorAll('.v-auto-expand').forEach(t => adjustTextareaHeight(t));
+      }, 10);
+      groupedContainer.innerHTML = left.map(base => {
+            const derivedForThis = right.filter(d => d.num === base.num);
+            const colorObj = getPresetColor(base.num);
+            const totalCount = 1 + derivedForThis.length;
+            const doneCount = (base.completed ? 1 : 0) + derivedForThis.filter(d => d.completed).length;
+
+            return `
+              <div class="p-3.5 rounded-2xl bg-neutral-50/80 border border-neutral-200/60 space-y-2.5">
+                <div class="flex items-center justify-between pb-2 border-b border-neutral-200/50">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-black px-2 py-0.5 rounded-md border ${colorObj.badgeClass}">${base.num}번</span>
+                    <span class="text-xs font-bold text-neutral-900 ${base.completed ? 'line-through text-neutral-400' : ''}">
+                      ${escapeHtml(base.text)}
+                    </span>
+                  </div>
+                  <span class="text-[11px] text-neutral-500 font-semibold">${doneCount}/${totalCount} 완료</span>
+                </div>
+                
+                <!-- Chips for Base & Derived items -->
+                <div class="flex flex-wrap gap-1.5">
+                  <span class="text-xs px-2.5 py-1 rounded-xl bg-white border border-neutral-200 text-neutral-900 font-bold flex items-center gap-1.5 ${base.completed ? 'line-through text-neutral-400' : ''}">
+                    <span>${base.completed ? '✓' : '•'}</span>
+                    <span>${escapeHtml(base.text)}</span>
+                  </span>
+                  ${derivedForThis.map(d => `
+                    <span class="text-xs px-2.5 py-1 rounded-xl bg-white/90 border border-neutral-200/80 text-neutral-700 flex items-center gap-1.5 ${d.completed ? 'line-through text-neutral-400' : ''}">
+                      <span>${d.completed ? '✓' : '↳'}</span>
+                      <span>${escapeHtml(d.text)}</span>
+                    </span>
+                  `).join('')}
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+      }
+    }
+
+    // Submit Base Task (Left)
+    window.submitDirectBaseTask = function() {
+      const input = document.getElementById('directLeftInput');
+      if (!input) return;
+      const raw = input.value.trim();
+      if (!raw) return;
+
+      const tg = appState.thoughtGathering;
+      if (!tg.leftItems) tg.leftItems = [];
+
+      const existingNums = tg.leftItems.map(i => i.num);
+      let nextNum = 1;
+      while (existingNums.includes(nextNum)) {
+        nextNum++;
+      }
+      const colorObj = getPresetColor(nextNum);
+
+      tg.leftItems.push({
+        id: 'base_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        num: nextNum,
+        text: raw,
+        color: colorObj.id,
+        completed: false
+      });
+      activeBaseNum = nextNum;
+      saveState();
+      renderThoughtGatheringView();
+      input.value = '';
+      input.blur();
+      setTimeout(() => {
+        const freshInput = document.getElementById('directLeftInput');
+        if (freshInput) freshInput.focus();
+      }, 50);
+      // Silent addition
+    };
+
+    // Activate Parent Base for Deriving
+    window.setActiveBaseNum = function(num) {
+      activeBaseNum = parseInt(num, 10);
+      renderThoughtGatheringView();
+      const rightInput = document.getElementById('directRightInput');
+      if (rightInput) {
+        rightInput.focus();
+        rightInput.placeholder = '엔터로 추가';
+      }
+      // Silent activation
+    };
+
+    // Submit Derived Task (Right) - Automatically binds to activeBaseNum & color!
+    window.submitDirectDerivedTask = function() {
+      const input = document.getElementById('directRightInput');
+      if (!input) return;
+      const raw = input.value.trim();
+      if (!raw) return;
+
+      const tg = appState.thoughtGathering;
+      if (!tg.rightItems) tg.rightItems = [];
+
+      // Auto-create base 1 if none exists
+      if (!tg.leftItems || tg.leftItems.length === 0) {
+        if (!tg.leftItems) tg.leftItems = [];
+        tg.leftItems.push({
+          id: 'base_' + Date.now(),
+          num: 1,
+          text: '중심 할 일 1',
+          color: getPresetColor(1).id,
+          completed: false
+        });
+        activeBaseNum = 1;
+      }
+
+      const colorObj = getPresetColor(activeBaseNum);
+      tg.rightItems.push({
+        id: 'derived_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        num: activeBaseNum,
+        text: raw,
+        color: colorObj.id,
+        completed: false
+      });
+
+      saveState();
+      renderThoughtGatheringView();
+      input.value = '';
+      input.blur();
+      setTimeout(() => {
+        const freshInput = document.getElementById('directRightInput');
+        if (freshInput) freshInput.focus();
+      }, 50);
+      // Silent addition
+    };
+
+    window.updateTGBaseText = function(id, newText) {
+      const item = appState.thoughtGathering.leftItems?.find(i => i.id === id);
+      if (item) {
+        item.text = newText;
+        saveState();
+      }
+    };
+
+    window.updateTGDerivedText = function(id, newText) {
+      const item = appState.thoughtGathering.rightItems?.find(i => i.id === id);
+      if (item) {
+        item.text = newText;
+        saveState();
+      }
+    };
+
+    window.toggleTGBaseTask = function(id) {
+      const item = appState.thoughtGathering.leftItems?.find(i => i.id === id);
+      if (item) {
+        item.completed = !item.completed;
+        saveState();
+        renderThoughtGatheringView();
+      }
+    };
+
+    window.toggleTGDerivedTask = function(id) {
+      const item = appState.thoughtGathering.rightItems?.find(i => i.id === id);
+      if (item) {
+        item.completed = !item.completed;
+        saveState();
+        renderThoughtGatheringView();
+      }
+    };
+
+    window.deleteTGBaseItem = function(id) {
+      const tg = appState.thoughtGathering;
+      const target = tg.leftItems?.find(i => i.id === id);
+      if (target) {
+        tg.leftItems = tg.leftItems.filter(i => i.id !== id);
+        // Also remove derived items of this base
+        tg.rightItems = (tg.rightItems || []).filter(i => i.num !== target.num);
+        if (activeBaseNum === target.num && tg.leftItems.length > 0) {
+          activeBaseNum = tg.leftItems[0].num;
+        }
+        saveState();
+        renderThoughtGatheringView();
+        showToast(`베이스 ${target.num}번과 연관 파생 항목이 삭제되었습니다.`);
+      }
+    };
+
+    window.deleteTGDerivedItem = function(id) {
+      const tg = appState.thoughtGathering;
+      tg.rightItems = (tg.rightItems || []).filter(i => i.id !== id);
+      saveState();
+      renderThoughtGatheringView();
+      showToast('파생 할 일이 삭제되었습니다.');
+    };
+
+    // Thought Gathering Archive System (세션 보관함 및 저장 기능)
+    window.saveCurrentTGBoard = function() {
+      const tg = appState.thoughtGathering;
+      const leftCount = (tg.leftItems || []).length;
+      const rightCount = (tg.rightItems || []).length;
+      if (leftCount === 0 && rightCount === 0) {
+        showToast('저장할 할 일이 없습니다.');
+        return;
+      }
+
+      const defaultTitle = `${new Date().toISOString().slice(0, 10)} 생각 모으기 (${tg.leftItems[0]?.text || '할 일'} 외)`;
+      
+      const html = `
+        <div class="space-y-4">
+          <div class="flex items-center justify-between pb-2 border-b border-neutral-100">
+            <h4 class="text-sm sm:text-base font-bold text-neutral-900">💾 현재 생각 모으기 보드 저장</h4>
+            <button onclick="closeModal()" class="text-neutral-400 hover:text-neutral-900 text-sm">✕</button>
+          </div>
+          <p class="text-xs text-neutral-500 leading-relaxed">
+            현재 작성된 베이스 할 일 <b>${leftCount}개</b>와 파생 할 일 <b>${rightCount}개</b>를 보관함에 저장합니다.<br>
+            나중에 언제든지 다시 불러와 수정하거나 재활용할 수 있습니다.
+          </p>
+          <div>
+            <label class="block text-xs font-bold text-neutral-700 mb-1">보드 제목</label>
+            <input type="text" id="archiveBoardTitleInput" value="${escapeHtml(defaultTitle)}" class="w-full text-xs p-2.5 rounded-xl border border-neutral-200 focus:outline-none focus:border-neutral-900">
+          </div>
+          <div class="flex justify-end gap-2 pt-2 border-t border-neutral-100">
+            <button onclick="closeModal()" class="px-3.5 py-1.5 text-xs text-neutral-600 rounded-xl hover:bg-neutral-100">취소</button>
+            <button onclick="confirmSaveCurrentTGBoard()" class="px-4 py-1.5 text-xs font-bold text-white bg-neutral-900 rounded-xl hover:bg-neutral-800">보관함에 저장</button>
+          </div>
+        </div>
+      `;
+      openModal(html);
+    };
+
+    window.confirmSaveCurrentTGBoard = function() {
+      const input = document.getElementById('archiveBoardTitleInput');
+      const title = input?.value.trim() || `${new Date().toISOString().slice(0, 10)} 생각 모으기`;
+      
+      if (!appState.thoughtGatheringArchives) {
+        appState.thoughtGatheringArchives = [];
+      }
+
+      const newArchive = {
+        id: 'tga_' + Date.now(),
+        title,
+        date: new Date().toISOString().slice(0, 10),
+        leftItems: JSON.parse(JSON.stringify(appState.thoughtGathering.leftItems || [])),
+        rightItems: JSON.parse(JSON.stringify(appState.thoughtGathering.rightItems || []))
+      };
+
+      appState.thoughtGatheringArchives.unshift(newArchive);
+      saveState();
+      closeModal();
+      renderThoughtGatheringView();
+      showToast('현재 보드가 보관함에 안전하게 저장되었습니다! 📂', 'success');
+    };
+
+    window.openTGArchiveModal = function() {
+      const archives = appState.thoughtGatheringArchives || [];
+      
+      const renderArchiveList = (items) => {
+        if (items.length === 0) {
+          return `<div class="p-8 text-center text-xs text-neutral-400 bg-neutral-50 rounded-2xl">저장된 생각 모으기 보드가 없습니다.<br>[현재 보드 저장] 버튼을 눌러 보드를 저장해보세요!</div>`;
+        }
+        return items.map((arch, idx) => `
+          <div class="p-3.5 rounded-2xl bg-neutral-50 border border-neutral-200/70 hover:bg-white hover:border-neutral-300 transition-all space-y-2">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-6 h-6 rounded-lg bg-neutral-900 text-white text-[11px] font-bold flex items-center justify-center">${idx + 1}</span>
+                <h5 class="text-xs sm:text-sm font-bold text-neutral-900 truncate">${escapeHtml(arch.title)}</h5>
+              </div>
+              <span class="text-[10px] text-neutral-400 font-mono">${escapeHtml(arch.date)}</span>
+            </div>
+            
+            <div class="flex flex-wrap gap-1 text-[11px]">
+              <span class="px-2 py-0.5 rounded-md bg-neutral-200/70 text-neutral-700 font-semibold">베이스 ${arch.leftItems?.length || 0}개</span>
+              <span class="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 font-semibold">파생 ${arch.rightItems?.length || 0}개</span>
+              ${(arch.leftItems || []).slice(0, 3).map(l => `
+                <span class="px-1.5 py-0.5 rounded-md bg-white border border-neutral-200 text-neutral-600 truncate max-w-[120px]">${l.num}. ${escapeHtml(l.text)}</span>
+              `).join('')}
+            </div>
+
+            <div class="flex items-center justify-end gap-1.5 pt-1 border-t border-neutral-200/50">
+              <button onclick="loadTGBoardFromArchive('${arch.id}')" class="px-3 py-1 rounded-xl bg-neutral-900 text-white text-xs font-bold hover:bg-neutral-800 transition-colors">
+                이 보드 불러오기 🔄
+              </button>
+              <button onclick="deleteTGArchive('${arch.id}')" class="px-2.5 py-1 rounded-xl bg-white border border-neutral-200 hover:bg-red-50 hover:text-red-600 text-neutral-500 text-xs transition-colors">
+                삭제
+              </button>
+            </div>
+          </div>
+        `).join('');
+      };
+
+      const html = `
+        <div class="space-y-3.5 max-h-[80vh] flex flex-col">
+          <div class="flex items-center justify-between pb-2 border-b border-neutral-100">
+            <div>
+              <h4 class="text-sm sm:text-base font-bold text-neutral-900">📂 지난 생각 모으기 보관함 (${archives.length})</h4>
+              <p class="text-[11px] text-neutral-400 mt-0.5">이전에 저장해둔 보드를 언제든 캔버스로 불러와 재활용하세요.</p>
+            </div>
+            <button onclick="closeModal()" class="text-neutral-400 hover:text-neutral-900 text-sm">✕</button>
+          </div>
+
+          <div class="overflow-y-auto space-y-2 pr-1 flex-1">
+            ${renderArchiveList(archives)}
+          </div>
+
+          <div class="flex justify-between items-center pt-2 border-t border-neutral-100 text-xs">
+            <button onclick="saveCurrentTGBoard()" class="text-xs font-bold text-neutral-900 hover:underline">
+              + 현재 보드 바로 저장하기
+            </button>
+            <button onclick="closeModal()" class="px-4 py-1.5 text-xs text-neutral-600 rounded-xl hover:bg-neutral-100 font-semibold">닫기</button>
+          </div>
+        </div>
+      `;
+      openModal(html);
+    };
+
+    window.loadTGBoardFromArchive = function(archId) {
+      const archives = appState.thoughtGatheringArchives || [];
+      const found = archives.find(a => a.id === archId);
+      if (!found) return;
+
+      appState.thoughtGathering = {
+        leftItems: JSON.parse(JSON.stringify(found.leftItems || [])),
+        rightItems: JSON.parse(JSON.stringify(found.rightItems || []))
+      };
+      activeBaseNum = appState.thoughtGathering.leftItems[0]?.num || 1;
+      saveState();
+      closeModal();
+      renderThoughtGatheringView();
+      showToast(`[${found.title}] 보드를 성공적으로 불러왔습니다! 👏`, 'success');
+    };
+
+    window.deleteTGArchive = function(archId) {
+      if (!appState.thoughtGatheringArchives) return;
+      appState.thoughtGatheringArchives = appState.thoughtGatheringArchives.filter(a => a.id !== archId);
+      saveState();
+      openTGArchiveModal();
+      showToast('보관함에서 삭제되었습니다.');
+    };
+
+    window.startNewTGBoard = function() {
+      const leftCount = (appState.thoughtGathering?.leftItems || []).length;
+      if (leftCount > 0) {
+        const html = `
+          <div class="space-y-3.5">
+            <div class="flex items-center justify-between pb-2 border-b border-neutral-100">
+              <h4 class="text-sm sm:text-base font-bold text-neutral-900">새 생각 모으기 보드 시작</h4>
+              <button onclick="closeModal()" class="text-neutral-400 hover:text-neutral-900 text-sm">✕</button>
+            </div>
+            <p class="text-xs text-neutral-600 leading-relaxed">
+              현재 작성 중인 할 일이 있습니다.<br>
+              현재 보드를 보관함에 먼저 저장하시겠습니까, 아니면 바로 비우고 새로 시작하시겠습니까?
+            </p>
+            <div class="flex flex-col sm:flex-row justify-end gap-2 pt-2 border-t border-neutral-100">
+              <button onclick="confirmClearTGBoard(false)" class="px-3.5 py-1.5 text-xs text-neutral-600 rounded-xl hover:bg-neutral-100">저장 없이 비우기</button>
+              <button onclick="confirmClearTGBoard(true)" class="px-4 py-1.5 text-xs font-bold text-white bg-neutral-900 rounded-xl hover:bg-neutral-800">현재 보드 저장 후 새로 시작</button>
+            </div>
+          </div>
+        `;
+        openModal(html);
+      } else {
+        confirmClearTGBoard(false);
+      }
+    };
+
+    window.confirmClearTGBoard = function(saveFirst) {
+      if (saveFirst) {
+        const title = `${new Date().toISOString().slice(0, 10)} 생각 모으기 보관`;
+        if (!appState.thoughtGatheringArchives) appState.thoughtGatheringArchives = [];
+        appState.thoughtGatheringArchives.unshift({
+          id: 'tga_' + Date.now(),
+          title,
+          date: new Date().toISOString().slice(0, 10),
+          leftItems: JSON.parse(JSON.stringify(appState.thoughtGathering.leftItems || [])),
+          rightItems: JSON.parse(JSON.stringify(appState.thoughtGathering.rightItems || []))
+        });
+      }
+      appState.thoughtGathering = { leftItems: [], rightItems: [] };
+      activeBaseNum = 1;
+      saveState();
+      closeModal();
+      renderThoughtGatheringView();
+      showToast('새로운 생각 모으기 캔버스가 열렸습니다! ✨', 'success');
+    };
+
+
+    // ==========================================
+    // PAGE 5: 페이지 순서 & 커스텀 관리
+    // ==========================================
+    function renderPageManager(container) {
+      container.innerHTML = `
+        <div class="space-y-5 sm:space-y-6">
+          
+          <div class="bg-white p-5 sm:p-7 rounded-3xl border border-neutral-200/60 shadow-soft">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <span class="text-[10px] sm:text-[11px] font-bold text-neutral-400 uppercase tracking-wider">워크스페이스 맞춤 설정</span>
+                <h2 class="text-lg sm:text-2xl font-extrabold text-neutral-900 mt-0.5">페이지 순서 & 커스텀 관리</h2>
+                <p class="text-xs text-neutral-500 mt-1 max-w-xl leading-relaxed">
+                  "아직 강의를 다 들은 게 아니라 페이지 순서가 바뀔 수도 있어요!"<br>
+                  강의 진도에 맞춰 탭의 순서를 위/아래로 즉시 재배치하고 새 메모 페이지를 추가할 수 있습니다.
+                </p>
+              </div>
+
+              <button id="addNewCustomPageBtn" class="px-3.5 py-2 rounded-2xl bg-neutral-900 text-white text-xs font-bold hover:bg-neutral-800 transition-colors shadow-soft shrink-0">
+                + 새 커스텀 페이지 추가
+              </button>
+            </div>
+          </div>
+
+          <div class="bg-white p-5 sm:p-7 rounded-3xl border border-neutral-200/60 shadow-soft">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-xs sm:text-sm font-bold text-neutral-900">현재 워크스페이스 페이지 순서</h3>
+              <span class="text-[11px] text-neutral-400">순서 변경 시 상단 탭이 즉시 재배열됩니다.</span>
+            </div>
+
+            <div id="pageReorderList" class="space-y-2.5">
+              <!-- Rendered via JS -->
+            </div>
+
+            <div class="mt-6 pt-5 border-t border-neutral-100 flex flex-wrap items-center justify-between gap-3">
+              <div class="text-[11px] text-neutral-400">
+                작성한 모든 데이터는 브라우저(LocalStorage)에 자동 저장됩니다.
+              </div>
+              <div class="flex items-center gap-2">
+                <button id="exportDataBtn" class="px-3 py-1.5 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 text-xs font-semibold transition-colors">
+                  JSON 백업 내보내기
+                </button>
+                <button id="resetDefaultBtn" class="px-3 py-1.5 rounded-xl bg-neutral-50 hover:bg-red-50 text-neutral-500 hover:text-red-600 text-xs font-semibold border border-neutral-200 transition-colors">
+                  기본값으로 초기화
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      `;
+
+      renderPageReorderItems();
+
+      document.getElementById('addNewCustomPageBtn').addEventListener('click', openAddCustomPageModal);
+      document.getElementById('exportDataBtn').addEventListener('click', exportAppData);
+      document.getElementById('resetDefaultBtn').addEventListener('click', () => {
+        openResetConfirmModal(container);
+      });
+    }
+
+    function renderPageReorderItems() {
+      const container = document.getElementById('pageReorderList');
+      if (!container) return;
+
+      container.innerHTML = appState.pages.map((p, idx) => {
+        const isFirst = idx === 0;
+        const isLast = idx === appState.pages.length - 1;
+        const isDefault = ['guide', 'braindump', 'verticalline', 'plantask', 'pagemanager'].includes(p.id);
+
+        return `
+          <div class="flex items-center justify-between p-3 sm:p-3.5 rounded-2xl bg-neutral-50/70 border border-neutral-200/60 hover:border-neutral-300 transition-all">
+            <div class="flex items-center gap-2.5 min-w-0 pr-2">
+              <span class="w-7 h-7 rounded-xl bg-white border border-neutral-200/60 flex items-center justify-center text-xs shadow-soft shrink-0">
+                📄
+              </span>
+              <div class="min-w-0">
+                <div class="flex items-center gap-1.5">
+                  <h4 class="text-xs sm:text-sm font-bold text-neutral-900 truncate">${escapeHtml(p.title)}</h4>
+                  <span class="text-[9px] px-1.5 py-0.5 rounded-full ${isDefault ? 'bg-neutral-200/60 text-neutral-700' : 'bg-sand-200 text-neutral-800'} font-semibold shrink-0">
+                    ${isDefault ? '기본' : '커스텀'}
+                  </span>
+                </div>
+                <p class="text-[11px] text-neutral-400 truncate mt-0.5">${escapeHtml(p.desc || '')}</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-1 shrink-0">
+              <button onclick="movePageOrder(${idx}, -1)" ${isFirst ? 'disabled class="p-1.5 text-neutral-300 cursor-not-allowed"' : 'class="p-1.5 rounded-xl bg-white border border-neutral-200 hover:bg-neutral-100 text-neutral-700 text-xs font-bold transition-colors"'} title="위로">
+                ▲
+              </button>
+              <button onclick="movePageOrder(${idx}, 1)" ${isLast ? 'disabled class="p-1.5 text-neutral-300 cursor-not-allowed"' : 'class="p-1.5 rounded-xl bg-white border border-neutral-200 hover:bg-neutral-100 text-neutral-700 text-xs font-bold transition-colors"'} title="아래로">
+                ▼
+              </button>
+              ${!isDefault ? `
+                <button onclick="deleteCustomPage('${p.id}')" class="p-1.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 text-xs font-bold ml-1 transition-colors">
+                  ✕
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.movePageOrder = function(index, direction) {
+      const targetIndex = index + direction;
+      if (targetIndex < 0 || targetIndex >= appState.pages.length) return;
+
+      const temp = appState.pages[index];
+      appState.pages[index] = appState.pages[targetIndex];
+      appState.pages[targetIndex] = temp;
+
+      saveState();
+      renderTabs();
+      renderPageReorderItems();
+      showToast('페이지 순서가 변경되었습니다.', 'success');
+    };
+
+    window.deleteCustomPage = function(pageId) {
+      appState.pages = appState.pages.filter(p => p.id !== pageId);
+      if (appState.customPages && appState.customPages[pageId]) {
+        delete appState.customPages[pageId];
+      }
+      if (appState.activeTab === pageId) {
+        appState.activeTab = 'guide';
+      }
+      saveState();
+      renderTabs();
+      renderPageReorderItems();
+      showToast('커스텀 페이지가 삭제되었습니다.');
+    };
+
+    function openAddCustomPageModal() {
+      const html = `
+        <div class="space-y-3.5">
+          <div class="flex items-center justify-between pb-2 border-b border-neutral-100">
+            <h4 class="text-sm sm:text-base font-bold text-neutral-900">새 커스텀 페이지 추가</h4>
+            <button onclick="closeModal()" class="text-neutral-400 hover:text-neutral-900 text-sm">✕</button>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-neutral-700 mb-1">페이지 제목</label>
+            <input type="text" id="customPageTitle" placeholder="예: Chapter 03 심화 노트 / 아이디어 보관함" class="w-full text-xs p-2.5 rounded-xl border border-neutral-200 focus:outline-none focus:border-neutral-900">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-neutral-700 mb-1">페이지 설명</label>
+            <input type="text" id="customPageDesc" placeholder="예: 추가 강의를 들으며 새롭게 생긴 메모 공간" class="w-full text-xs p-2.5 rounded-xl border border-neutral-200 focus:outline-none focus:border-neutral-900">
+          </div>
+          <div class="flex justify-end gap-2 pt-2 border-t border-neutral-100">
+            <button onclick="closeModal()" class="px-3.5 py-1.5 text-xs text-neutral-600 rounded-xl hover:bg-neutral-100">취소</button>
+            <button id="saveCustomPageBtn" class="px-4 py-1.5 text-xs font-bold text-white bg-neutral-900 rounded-xl hover:bg-neutral-800">생성하기</button>
+          </div>
+        </div>
+      `;
+      openModal(html);
+
+      document.getElementById('saveCustomPageBtn').addEventListener('click', () => {
+        const title = document.getElementById('customPageTitle').value.trim();
+        const desc = document.getElementById('customPageDesc').value.trim() || '사용자 커스텀 페이지';
+
+        if (!title) {
+          showToast('페이지 제목을 입력해주세요.');
+          return;
+        }
+
+        const newId = 'custom_' + Date.now();
+        const newPage = { id: newId, title, desc };
+
+        appState.pages.push(newPage);
+        if (!appState.customPages) appState.customPages = {};
+        appState.customPages[newId] = {
+          content: '강의를 들으면서 추가로 생긴 메모나 아이디어를 여기에 기록하세요.'
+        };
+
+        saveState();
+        closeModal();
+        renderTabs();
+        renderPageReorderItems();
+        showToast('새 페이지가 추가되었습니다! 상단 탭에서 확인하세요.', 'success');
+      });
+    }
+
+    function renderCustomPage(container, pageId) {
+      const pageMeta = appState.pages.find(p => p.id === pageId) || { title: '커스텀 페이지', desc: '' };
+      const pageData = (appState.customPages && appState.customPages[pageId]) || { content: '' };
+
+      container.innerHTML = `
+        <div class="space-y-5">
+          <div class="bg-white p-5 sm:p-7 rounded-3xl border border-neutral-200/60 shadow-soft">
+            <div class="mb-2">
+              <h2 class="text-lg sm:text-2xl font-extrabold text-neutral-900">${escapeHtml(pageMeta.title)}</h2>
+              <p class="text-xs text-neutral-500 mt-0.5">${escapeHtml(pageMeta.desc || '')}</p>
+            </div>
+            
+            <div class="mt-5">
+              <label class="block text-xs font-bold text-neutral-700 mb-1.5">자유 메모 공간 (자동 저장)</label>
+              <textarea id="customPageContent" rows="12" placeholder="자유롭게 강의 내용이나 생각을 기록하세요..." class="w-full text-xs sm:text-sm p-3.5 rounded-2xl border border-neutral-200 bg-neutral-50/50 focus:bg-white focus:outline-none focus:border-neutral-900 leading-relaxed">${escapeHtml(pageData.content || '')}</textarea>
+              <div class="flex justify-end mt-3">
+                <button id="saveCustomContentBtn" class="px-4 py-2 rounded-xl bg-neutral-900 text-white text-xs font-bold hover:bg-neutral-800 transition-colors">
+                  내용 저장하기
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('saveCustomContentBtn').addEventListener('click', () => {
+        const text = document.getElementById('customPageContent').value;
+        if (!appState.customPages) appState.customPages = {};
+        appState.customPages[pageId] = { content: text };
+        saveState();
+        showToast('메모가 저장되었습니다.', 'success');
+      });
+    }
+
+    function openResetConfirmModal(pageManagerContainer) {
+      const html = `
+        <div class="space-y-3.5">
+          <div class="flex items-center justify-between pb-2 border-b border-neutral-100">
+            <h4 class="text-sm sm:text-base font-bold text-neutral-900">기본 데이터 초기화 확인</h4>
+            <button onclick="closeModal()" class="text-neutral-400 hover:text-neutral-900 text-sm">✕</button>
+          </div>
+          <p class="text-xs text-neutral-600 leading-relaxed">
+            작성하신 모든 메모, 세 줄 노트, 생각 모으기 데이터가 강의 기본 예시 상태로 복원됩니다.<br>
+            정말로 초기화하시겠습니까?
+          </p>
+          <div class="flex justify-end gap-2 pt-2 border-t border-neutral-100">
+            <button onclick="closeModal()" class="px-3.5 py-1.5 text-xs text-neutral-600 rounded-xl hover:bg-neutral-100">취소</button>
+            <button id="confirmResetBtn" class="px-4 py-1.5 text-xs font-bold text-white bg-red-600 rounded-xl hover:bg-red-700">초기화 진행</button>
+          </div>
+        </div>
+      `;
+      openModal(html);
+
+      document.getElementById('confirmResetBtn').addEventListener('click', () => {
+        appState = JSON.parse(JSON.stringify(DEFAULT_DATA));
+        saveState();
+        closeModal();
+        renderTabs();
+        renderPageManager(pageManagerContainer);
+        showToast('기본 데이터로 초기화되었습니다.', 'success');
+      });
+    }
+
+    function exportAppData() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `miracle_memo_backup_${new Date().toISOString().slice(0,10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showToast('백업 파일이 다운로드되었습니다.', 'success');
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Initialize Everything on Window Load
+    window.addEventListener('DOMContentLoaded', () => {
+      loadState();
+      renderTabs();
+      renderActivePage();
+      updateTopWidgets();
+
+      // Header quick action buttons removed as requested
+    });
+
+  </script>
+</body>
+</html>
