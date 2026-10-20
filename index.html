@@ -67,6 +67,10 @@
       resize: none !important;
       box-sizing: border-box;
     }
+    textarea.v-auto-expand:focus {
+      outline: none !important;
+      box-shadow: none !important;
+    }
     /* Dynamic color highlights for thought mapping (Preset 1 ~ 10) */
     .hl-orange { border-bottom: 3px solid #F97316; }
     .hl-pink { border-bottom: 3px solid #EC4899; }
@@ -80,7 +84,7 @@
     .hl-lime { border-bottom: 3px solid #84CC16; }
   </style>
 </head>
-<body class="min-h-screen text-neutral-900 pb-28 sm:pb-20">
+<body class="min-h-screen text-neutral-900 pb-12 sm:pb-16">
 
   <!-- Toast Notification Container -->
   <div id="toastContainer" class="fixed top-4 right-4 sm:top-6 sm:right-6 z-50 flex flex-col gap-2 pointer-events-none max-w-[90vw]"></div>
@@ -109,26 +113,7 @@
 
   </div>
 
-  <!-- Mobile Bottom Floating Navigation Bar -->
-  <div class="sm:hidden fixed bottom-3 left-3 right-3 z-40 bg-neutral-900/90 backdrop-blur-md text-white rounded-2xl p-1.5 shadow-float grid grid-cols-5 gap-1 border border-white/10 text-center font-['Tuffy'] tracking-wider">
-    <button onclick="switchTab('guide')" class="py-1.5 px-0.5 text-[11px] font-bold text-neutral-300 hover:text-white transition-colors truncate" data-bottom-tab="guide">
-      GUIDE
-    </button>
-    <button onclick="switchTab('braindump')" class="py-1.5 px-0.5 text-[11px] font-bold text-neutral-300 hover:text-white transition-colors truncate" data-bottom-tab="braindump">
-      DUMP
-    </button>
-    <button onclick="switchTab('verticalline')" class="py-1.5 px-0.5 text-[11px] font-bold text-neutral-300 hover:text-white transition-colors truncate" data-bottom-tab="verticalline">
-      3-LINE
-    </button>
-    <button onclick="switchTab('plantask')" class="py-1.5 px-0.5 text-[11px] font-bold text-neutral-300 hover:text-white transition-colors truncate" data-bottom-tab="plantask">
-      PLAN
-    </button>
-    <button onclick="switchTab('pagemanager')" class="py-1.5 px-0.5 text-[11px] font-bold text-neutral-300 hover:text-white transition-colors truncate" data-bottom-tab="pagemanager">
-      PAGES
-    </button>
-  </div>
-
-  <script>
+<script>
     // Initial App State & Persistence
     const STORAGE_KEY = 'MIRACLE_MEMO_APP_DATA_v3';
 
@@ -144,6 +129,73 @@
       8: { id: 'indigo', name: '남색', hlClass: 'hl-indigo text-indigo-950', badgeClass: 'bg-indigo-100 text-indigo-900 border-indigo-200', dot: 'bg-indigo-500' },
       9: { id: 'rose', name: '로즈', hlClass: 'hl-rose text-rose-950', badgeClass: 'bg-rose-100 text-rose-900 border-rose-200', dot: 'bg-rose-500' },
       10: { id: 'lime', name: '라임', hlClass: 'hl-lime text-lime-950', badgeClass: 'bg-lime-100 text-lime-900 border-lime-200', dot: 'bg-lime-500' }
+    };
+
+        function formatShortDate(dateStr) {
+      if (!dateStr) return '';
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        const yy = parts[0].length === 4 ? parts[0].slice(2) : parts[0];
+        return `${yy}/${parts[1]}/${parts[2]}`;
+      }
+      return dateStr;
+    }
+
+    let vRowTouchTimer = null;
+    let vRowLongPressed = false;
+
+    window.handleVRowTouchStart = function(e, rIdx) {
+      vRowLongPressed = false;
+      vRowTouchTimer = setTimeout(() => {
+        vRowLongPressed = true;
+        if (navigator.vibrate) navigator.vibrate(30);
+        promptDeleteVRow(rIdx);
+      }, 500);
+    };
+
+    window.handleVRowTouchEnd = function(e) {
+      if (vRowTouchTimer) {
+        clearTimeout(vRowTouchTimer);
+        vRowTouchTimer = null;
+      }
+    };
+
+    window.handleVRowTouchMove = function(e) {
+      if (vRowTouchTimer) {
+        clearTimeout(vRowTouchTimer);
+        vRowTouchTimer = null;
+      }
+    };
+
+    window.promptDeleteVRow = function(rIdx) {
+      const active = getActiveVNote();
+      if (!active || !active.rows || !active.rows[rIdx]) return;
+      const row = active.rows[rIdx];
+      const previewText = (row.fact || row.thought || '').trim();
+
+      const html = `
+        <div class="space-y-3.5">
+          <div class="flex items-center justify-between pb-2 border-b border-neutral-100">
+            <h4 class="text-sm sm:text-base font-bold text-neutral-900">행 삭제 확인</h4>
+            <button onclick="closeModal()" class="text-neutral-400 hover:text-neutral-900 text-sm">✕</button>
+          </div>
+          <p class="text-xs text-neutral-700 leading-relaxed">
+            이 행을 삭제하시겠습니까?
+            ${previewText ? `<br><span class="text-neutral-500 text-[11px] mt-1.5 block p-2 bg-neutral-50 rounded-xl border border-neutral-100 truncate font-medium">"${escapeHtml(previewText)}"</span>` : ''}
+          </p>
+          <div class="flex justify-end gap-2 pt-2 border-t border-neutral-100">
+            <button onclick="closeModal()" class="px-3.5 py-1.5 text-xs text-neutral-600 rounded-xl hover:bg-neutral-100 font-semibold">취소</button>
+            <button onclick="confirmDeleteVRow(${rIdx})" class="px-4 py-1.5 text-xs font-bold text-white bg-red-600 rounded-xl hover:bg-red-700">삭제</button>
+          </div>
+        </div>
+      `;
+      openModal(html);
+    };
+
+    window.confirmDeleteVRow = function(rIdx) {
+      deleteVRow(rIdx);
+      closeModal();
+      showToast('행이 삭제되었습니다.');
     };
 
     function getPresetColor(num) {
@@ -365,15 +417,7 @@
         tabBar.appendChild(btn);
       });
 
-      // Update mobile bottom tab highlighting
-      document.querySelectorAll('[data-bottom-tab]').forEach(btn => {
-        const tid = btn.getAttribute('data-bottom-tab');
-        if (tid === appState.activeTab) {
-          btn.className = 'py-1.5 px-0.5 text-[11px] font-black text-white bg-white/20 rounded-xl transition-colors truncate';
-        } else {
-          btn.className = 'py-1.5 px-0.5 text-[11px] font-medium text-neutral-400 hover:text-white transition-colors truncate';
-        }
-      });
+
     }
 
     window.switchTab = function(tabId) {
@@ -973,7 +1017,7 @@
               <div class="flex items-center gap-2 min-w-0">
                 <span class="text-xs font-bold text-neutral-400">현재 노트:</span>
                 <span class="text-xs sm:text-sm font-extrabold text-neutral-900 truncate bg-neutral-100 px-2.5 py-1 rounded-xl">${escapeHtml(activeNote?.title || '무제 노트')}</span>
-                <span class="text-[11px] text-neutral-400 font-mono hidden sm:inline">(${escapeHtml(activeNote?.date || '')})</span>
+                <span class="text-[11px] text-neutral-400 font-mono hidden sm:inline">(${escapeHtml(formatShortDate(activeNote?.date || ''))})</span>
               </div>
               <button onclick="openVNoteListModal()" class="text-xs text-neutral-600 hover:text-neutral-900 font-semibold underline shrink-0">
                 다른 노트로 전환 ▾
@@ -999,7 +1043,7 @@
     function adjustTextareaHeight(el) {
       if (!el) return;
       el.style.height = 'auto';
-      el.style.height = Math.max(el.scrollHeight, 38) + 'px';
+      el.style.height = el.scrollHeight + 'px';
     }
 
     function renderActiveVNoteCanvas() {
@@ -1019,27 +1063,21 @@
       container.innerHTML = `
         <div class="bg-white rounded-3xl border border-neutral-200/70 shadow-soft overflow-hidden relative">
           
-          <!-- Apple / iPhone Style Window Header (Red, Yellow, Green dots) -->
-          <div class="bg-neutral-100/90 px-4 sm:px-6 py-2.5 border-b border-neutral-200/60 flex items-center justify-between">
-            <div class="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0 pr-2">
-              <!-- iPhone / Mac traffic light 3 dots -->
-              <div class="flex items-center gap-1.5 shrink-0 px-1 py-1" title="아이폰 / macOS 스타일">
-                <span class="w-3 h-3 rounded-full bg-[#FF5F56] border border-black/10 inline-block shadow-sm"></span>
-                <span class="w-3 h-3 rounded-full bg-[#FFBD2E] border border-black/10 inline-block shadow-sm"></span>
-                <span class="w-3 h-3 rounded-full bg-[#27C93F] border border-black/10 inline-block shadow-sm"></span>
-              </div>
-              <!-- Editable Note Title -->
+          <!-- Note Window Header (Cleaned: No Mac dots, short date, expanded title) -->
+          <div class="bg-neutral-100/90 px-4 sm:px-6 py-2.5 border-b border-neutral-200/60 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2 flex-1 min-w-0">
+              <!-- Editable Note Title (Expanded for readability) -->
               <input 
                 type="text" 
                 value="${escapeHtml(activeNote.title || '무제 세 줄 노트')}" 
                 oninput="updateActiveVNoteTitle(this.value)"
                 title="클릭하여 제목 수정"
-                class="text-xs sm:text-sm font-extrabold text-neutral-900 bg-transparent hover:bg-white focus:bg-white border border-transparent focus:border-neutral-300 rounded-lg px-2 py-0.5 focus:outline-none transition-all truncate flex-1 max-w-md"
+                class="text-xs sm:text-sm font-extrabold text-neutral-900 bg-transparent hover:bg-white focus:bg-white border border-transparent focus:border-neutral-300 rounded-lg px-2 py-0.5 focus:outline-none transition-all truncate w-full"
               >
             </div>
             
             <div class="flex items-center gap-2 shrink-0">
-              <span class="text-[10px] text-neutral-400 font-mono">${escapeHtml(activeNote.date || '')}</span>
+              <span class="text-xs text-neutral-500 font-mono font-bold">${escapeHtml(formatShortDate(activeNote.date || ''))}</span>
               <button onclick="deleteActiveVNote()" class="text-neutral-400 hover:text-red-500 text-xs px-2 py-1 rounded-lg hover:bg-red-50 transition-colors">
                 노트 삭제
               </button>
@@ -1049,53 +1087,56 @@
           <!-- Main Note Body: 2-Column Table -->
           <div class="p-4 sm:p-7 space-y-5">
             
-            <!-- Table Header (Center Aligned to Match Columns Below) -->
-            <div class="grid grid-cols-12 bg-neutral-100/80 border border-neutral-200/70 rounded-2xl py-2 px-3 text-xs font-bold text-neutral-800">
-              <div class="col-span-1 text-center text-neutral-400">#</div>
-              <div class="col-span-5 text-center text-neutral-900">
+            <!-- Table Header (Equal 2 Columns with Center Divider) -->
+            <div class="grid grid-cols-2 divide-x divide-neutral-200/80 bg-neutral-100/80 border border-neutral-200/70 rounded-2xl py-2 text-xs font-bold text-neutral-800">
+              <div class="text-center text-neutral-900 px-3">
                 <span>사실 (Fact)</span>
               </div>
-              <div class="col-span-5 text-center text-neutral-900">
+              <div class="text-center text-neutral-900 px-3">
                 <span>생각 (Question)</span>
               </div>
-              <div class="col-span-1 text-center text-neutral-400 text-[10px]">삭제</div>
             </div>
 
-            <!-- Table Rows (Multiline Auto-expanding for Fact & Question) -->
-            <div class="space-y-2">
+            <!-- Table Rows (One Unified Block, Middle Divider, Vertically Centered Fact, Long-press to delete) -->
+            <div class="space-y-2.5">
               ${activeNote.rows.map((row, rIdx) => `
-                <div class="grid grid-cols-12 items-start p-2 rounded-2xl bg-neutral-50/70 border border-neutral-200/60 hover:bg-white hover:border-neutral-300 transition-all">
-                  <div class="col-span-1 text-center text-[11px] font-bold text-neutral-400 pt-2.5 font-['Tuffy']">${rIdx + 1}</div>
-                  <div class="col-span-5 pr-1">
+                <div class="grid grid-cols-2 divide-x divide-neutral-200/80 items-stretch rounded-2xl bg-white border border-neutral-200/70 hover:border-neutral-400 transition-all select-none shadow-[0_1px_3px_rgba(0,0,0,0.02)]"
+                     data-vrow-index="${rIdx}"
+                     ontouchstart="handleVRowTouchStart(event, ${rIdx})"
+                     ontouchend="handleVRowTouchEnd(event)"
+                     ontouchmove="handleVRowTouchMove(event)"
+                     oncontextmenu="event.preventDefault(); promptDeleteVRow(${rIdx});">
+                  
+                  <!-- Left: 사실 (Fact) - Vertically Centered when Thought expands -->
+                  <div class="flex items-center px-3.5 py-2.5 sm:px-4 sm:py-3 select-text min-h-[48px]">
                     <textarea 
-                      rows="2" 
+                      rows="1" 
                       oninput="adjustTextareaHeight(this); updateVRowFact(${rIdx}, this.value)"
                       placeholder="사실 기재..." 
-                      class="v-auto-expand w-full text-xs p-2.5 rounded-xl border border-neutral-200 bg-white focus:outline-none focus:border-neutral-900 font-medium transition-all resize-none overflow-hidden leading-relaxed block"
+                      class="v-auto-expand w-full text-xs sm:text-sm font-medium text-neutral-900 bg-transparent border-0 focus:outline-none focus:ring-0 resize-none overflow-hidden leading-relaxed block p-0 m-0"
                     >${escapeHtml(row.fact)}</textarea>
                   </div>
-                  <div class="col-span-5 pl-1">
+
+                  <!-- Right: 생각 (Question) - Vertically Centered -->
+                  <div class="flex items-center px-3.5 py-2.5 sm:px-4 sm:py-3 select-text min-h-[48px]">
                     <textarea 
-                      rows="2" 
+                      rows="1" 
                       oninput="adjustTextareaHeight(this); updateVRowThought(${rIdx}, this.value)"
                       placeholder="생각/질문 기재... (엔터로 줄바꿈 가능)" 
-                      class="v-auto-expand w-full text-xs p-2.5 rounded-xl border border-neutral-200 bg-white focus:outline-none focus:border-neutral-900 font-medium transition-all resize-none overflow-hidden leading-relaxed block"
+                      class="v-auto-expand w-full text-xs sm:text-sm font-medium text-neutral-900 bg-transparent border-0 focus:outline-none focus:ring-0 resize-none overflow-hidden leading-relaxed block p-0 m-0"
                     >${escapeHtml(row.thought)}</textarea>
                   </div>
-                  <div class="col-span-1 text-center pt-2">
-                    <button onclick="deleteVRow(${rIdx})" class="text-neutral-300 hover:text-red-500 p-1 rounded-lg text-xs transition-colors" title="행 삭제">
-                      ✕
-                    </button>
-                  </div>
+
                 </div>
               `).join('')}
             </div>
 
-            <!-- Table Controls: Add Row (Clutter text removed) -->
+            <!-- Table Controls: Add Row & Long-press Delete Guidance -->
             <div class="flex items-center justify-between pt-1">
               <button onclick="addVRow()" class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-neutral-900 text-white text-xs font-bold hover:bg-neutral-800 transition-colors shadow-soft">
                 <span>+ 행 추가하기</span>
               </button>
+              <span class="text-[10px] text-neutral-400">💡 행을 꾹 누르면 삭제 팝업창이 뜹니다</span>
             </div>
 
             <!-- RESULT & CONCLUSION -->
@@ -1151,6 +1192,10 @@
 
         </div>
       `;
+
+      setTimeout(() => {
+        container.querySelectorAll('.v-auto-expand').forEach(t => adjustTextareaHeight(t));
+      }, 0);
     }
 
     // Modal for Past Vertical Notes List (Pop-up search & manage)
@@ -1189,7 +1234,7 @@
                   <span class="text-xs sm:text-sm font-bold truncate">${escapeHtml(n.title || '무제 노트')}</span>
                   ${isCurrent ? '<span class="text-[9px] px-2 py-0.5 rounded-full bg-white/20 text-white font-extrabold shrink-0">현재 열림</span>' : ''}
                 </div>
-                <span class="text-[10px] ${isCurrent ? 'text-neutral-400' : 'text-neutral-400'} font-mono shrink-0">${escapeHtml(n.date || '')}</span>
+                <span class="text-[10px] text-neutral-400 font-mono shrink-0">${escapeHtml(formatShortDate(n.date || ''))}</span>
               </div>
 
               <p class="text-xs ${isCurrent ? 'text-neutral-300' : 'text-neutral-500'} truncate mb-2">
@@ -1442,7 +1487,7 @@
               <div>
                 <h2 class="text-lg sm:text-2xl font-extrabold text-neutral-900">계획과 할일</h2>
                 <p class="text-xs text-neutral-500 mt-1 max-w-xl leading-relaxed">
-                  왼쪽 <b>계획</b>을 적고 <b>[+ 할 일]</b>을 누르면 오른쪽에서 연관된 할 일들을 빠르게 정리할 수 있습니다.
+                  왼쪽 <b>계획</b>을 적고 <b>○(원) 버튼</b>을 누르면 오른쪽에서 연관된 할 일들을 빠르게 정리할 수 있습니다.
                 </p>
               </div>
 
@@ -1597,84 +1642,74 @@
         }
       }
 
-      // Render Left (Base) Item Card
+      // Render Left (Base) Item Card (Inline layout: [checkbox] [number] [text] [dot / +할일] [x])
       const renderBaseRow = (item) => {
         const isDone = item.completed;
         const colorObj = getPresetColor(item.num);
         const isActiveForDerive = item.num === activeBaseNum;
 
         return `
-          <div class="p-2 sm:p-2.5 rounded-xl transition-all space-y-1 ${
+          <div class="flex items-center gap-2 p-2 sm:p-2.5 rounded-xl transition-all ${
             isActiveForDerive ? 'bg-white border-2 border-neutral-900 shadow-soft' : 'bg-neutral-50/80 border border-neutral-200/70 hover:bg-white hover:border-neutral-300'
           } ${isDone ? 'opacity-60' : ''}">
             
-            <div class="flex items-center justify-between gap-1">
-              <div class="flex items-center gap-1.5">
-                <button onclick="toggleTGBaseTask('${item.id}')" title="완료 토글" class="w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ${isDone ? 'bg-neutral-900 border-neutral-900 text-white' : 'border-neutral-300 hover:border-neutral-900'}">
-                  ${isDone ? '✓' : ''}
-                </button>
-                <!-- Number Badge: 30% more compact -->
-                <span class="text-[10px] font-black px-1.5 py-0.5 rounded-md border ${colorObj.badgeClass} font-['Tuffy']">
-                  ${item.num}
+            <button onclick="toggleTGBaseTask('${item.id}')" title="완료 토글" class="w-4 h-4 rounded border flex items-center justify-center shrink-0 ${isDone ? 'bg-neutral-900 border-neutral-900 text-white' : 'border-neutral-300 hover:border-neutral-900'}">
+              ${isDone ? '✓' : ''}
+            </button>
+            
+            <span class="text-[10px] font-black px-1.5 py-0.5 rounded-md border ${colorObj.badgeClass} font-['Tuffy'] shrink-0">
+              ${item.num}
+            </span>
+
+            <textarea 
+              rows="1" 
+              oninput="adjustTextareaHeight(this); updateTGBaseText('${item.id}', this.value)"
+              placeholder="내용 입력..."
+              class="v-auto-expand flex-1 text-xs font-bold text-neutral-900 ${colorObj.hlClass} ${isDone ? 'line-through text-neutral-400' : ''} bg-transparent focus:bg-white focus:outline-none border-b border-transparent focus:border-neutral-300 rounded px-1.5 py-0.5 transition-all resize-none overflow-hidden leading-relaxed block"
+            >${escapeHtml(item.text)}</textarea>
+
+            <div class="flex items-center gap-1 shrink-0">
+              ${isActiveForDerive ? `
+                <span class="p-1 flex items-center justify-center shrink-0" title="현재 활성화됨 (작성 중)">
+                  <span class="w-2.5 h-2.5 rounded-full bg-neutral-900 inline-block"></span>
                 </span>
-              </div>
-
-              <!-- Action: [+ 할 일] Button & Delete (30% more compact) -->
-              <div class="flex items-center gap-1">
-                <button onclick="setActiveBaseNum(${item.num})" class="px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all ${
-                  isActiveForDerive ? 'bg-neutral-900 text-white shadow-soft' : 'bg-white border border-neutral-200 text-neutral-800 hover:bg-neutral-100'
-                }" title="할 일 작성하기">
-                  <span>${isActiveForDerive ? '작성 중' : '+ 할 일'}</span>
+              ` : `
+                <button onclick="setActiveBaseNum(${item.num})" class="p-1 flex items-center justify-center hover:scale-110 transition-transform shrink-0" title="클릭하여 파생 할 일 연결">
+                  <span class="w-2.5 h-2.5 rounded-full border-[1.5px] border-neutral-900 bg-transparent inline-block"></span>
                 </button>
-                <button onclick="deleteTGBaseItem('${item.id}')" class="text-neutral-300 hover:text-red-500 text-xs px-1" title="삭제">✕</button>
-              </div>
-            </div>
-
-            <!-- Auto-expanding Multiline Textarea (No Scrollbar, expands to show all content) -->
-            <div>
-              <textarea 
-                rows="1" 
-                oninput="adjustTextareaHeight(this); updateTGBaseText('${item.id}', this.value)"
-                class="v-auto-expand w-full text-xs font-bold text-neutral-900 pb-0.5 ${colorObj.hlClass} ${isDone ? 'line-through text-neutral-400' : ''} bg-transparent focus:bg-white focus:outline-none border-b border-transparent focus:border-neutral-300 rounded px-1 transition-all resize-none overflow-hidden leading-relaxed block"
-              >${escapeHtml(item.text)}</textarea>
+              `}
+              <button onclick="deleteTGBaseItem('${item.id}')" class="text-neutral-300 hover:text-red-500 text-xs p-1" title="삭제">✕</button>
             </div>
 
           </div>
         `;
       };
 
-      // Render Right (Derived) Item Card
+      // Render Right (Derived) Item Card (Inline layout: [checkbox] [number] [text] [x])
       const renderDerivedRow = (item) => {
         const isDone = item.completed;
         const colorObj = getPresetColor(item.num);
 
         return `
-          <div class="p-2 sm:p-2.5 rounded-xl bg-neutral-50/80 border border-neutral-200/70 hover:bg-white hover:border-neutral-300 transition-all space-y-1 ${isDone ? 'opacity-60' : ''}">
+          <div class="flex items-center gap-2 p-2 sm:p-2.5 rounded-xl bg-neutral-50/80 border border-neutral-200/70 hover:bg-white hover:border-neutral-300 transition-all ${isDone ? 'opacity-60' : ''}">
             
-            <div class="flex items-center justify-between gap-1">
-              <div class="flex items-center gap-1.5">
-                <button onclick="toggleTGDerivedTask('${item.id}')" title="완료 토글" class="w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ${isDone ? 'bg-neutral-900 border-neutral-900 text-white' : 'border-neutral-300 hover:border-neutral-900'}">
-                  ${isDone ? '✓' : ''}
-                </button>
-                <!-- Number Badge: 30% more compact -->
-                <span class="text-[10px] font-black px-1.5 py-0.5 rounded-md border ${colorObj.badgeClass} font-['Tuffy']">
-                  ${item.num}
-                </span>
-              </div>
+            <button onclick="toggleTGDerivedTask('${item.id}')" title="완료 토글" class="w-4 h-4 rounded border flex items-center justify-center shrink-0 ${isDone ? 'bg-neutral-900 border-neutral-900 text-white' : 'border-neutral-300 hover:border-neutral-900'}">
+              ${isDone ? '✓' : ''}
+            </button>
+            
+            <span class="text-[10px] font-black px-1.5 py-0.5 rounded-md border ${colorObj.badgeClass} font-['Tuffy'] shrink-0">
+              ${item.num}
+            </span>
 
-              <!-- Delete Button -->
-              <div class="flex items-center gap-1">
-                <button onclick="deleteTGDerivedItem('${item.id}')" class="text-neutral-300 hover:text-red-500 text-xs px-1" title="삭제">✕</button>
-              </div>
-            </div>
+            <textarea 
+              rows="1" 
+              oninput="adjustTextareaHeight(this); updateTGDerivedText('${item.id}', this.value)"
+              placeholder="세부 할 일 입력..."
+              class="v-auto-expand flex-1 text-xs font-semibold text-neutral-900 ${colorObj.hlClass} ${isDone ? 'line-through text-neutral-400' : ''} bg-transparent focus:bg-white focus:outline-none border-b border-transparent focus:border-neutral-300 rounded px-1.5 py-0.5 transition-all resize-none overflow-hidden leading-relaxed block"
+            >${escapeHtml(item.text)}</textarea>
 
-            <!-- Auto-expanding Multiline Textarea (No Scrollbar, expands to show all content) -->
-            <div>
-              <textarea 
-                rows="1" 
-                oninput="adjustTextareaHeight(this); updateTGDerivedText('${item.id}', this.value)"
-                class="v-auto-expand w-full text-xs font-semibold text-neutral-900 pb-0.5 ${colorObj.hlClass} ${isDone ? 'line-through text-neutral-400' : ''} bg-transparent focus:bg-white focus:outline-none border-b border-transparent focus:border-neutral-300 rounded px-1 transition-all resize-none overflow-hidden leading-relaxed block"
-              >${escapeHtml(item.text)}</textarea>
+            <div class="flex items-center shrink-0">
+              <button onclick="deleteTGDerivedItem('${item.id}')" class="text-neutral-300 hover:text-red-500 text-xs px-1" title="삭제">✕</button>
             </div>
 
           </div>
